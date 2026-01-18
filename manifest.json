@@ -1,6 +1,6 @@
 {
   "short_name": "Contracten",
-  "name": "Mijn Contract Beheer",
+  "name": "Mijn contracten",
   "icons": [
     {
       "src": "https://iili.io/fUPOeet.png",
@@ -15,3 +15,4 @@
   "background_color": "#F8FAFC"
 
 }
+
