@@ -1,0 +1,16 @@
+{
+  "short_name": "Contracten",
+  "name": "Mijn Contract Beheer",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/552/552791.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#001D3D",
+  "background_color": "#F8FAFC"
+}
