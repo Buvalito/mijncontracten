@@ -117,18 +117,19 @@
             const stats = useMemo(() => {
                 const active = contracts.filter(c => c.status === 'active');
                 const totalMonthly = active.reduce((acc, curr) => acc + getMonthlyCost(curr), 0);
-                const subscriptionTotal = active.filter(c => c.type === 'Subscription').reduce((acc, curr) => acc + getMonthlyCost(curr), 0);
+                const subscriptions = active.filter(c => c.type === 'Subscription');
+                const subscriptionTotal = subscriptions.reduce((acc, curr) => acc + getMonthlyCost(curr), 0);
                 const expensive = active.length > 0 ? [...active].sort((a, b) => getMonthlyCost(b) - getMonthlyCost(a))[0] : null;
+                const expensiveSub = subscriptions.length > 0 ? [...subscriptions].sort((a, b) => getMonthlyCost(b) - getMonthlyCost(a))[0] : null;
                 const ratio = income > 0 ? (totalMonthly / income) * 100 : 0;
                 const remaining = income ? (parseFloat(income) - totalMonthly) : 0;
 
-                // Kosten per categorie berekenen
                 const categoryData = ['Housing', 'Insurance', 'Subscription', 'Utilities', 'Other'].map(type => {
                     const total = active.filter(c => c.type === type).reduce((acc, curr) => acc + getMonthlyCost(curr), 0);
                     return { type, total };
                 }).filter(cat => cat.total > 0);
 
-                return { totalMonthly, expensive, subscriptionTotal, count: active.length, ratio, remaining, categoryData };
+                return { totalMonthly, expensive, expensiveSub, subscriptionTotal, count: active.length, ratio, remaining, categoryData };
             }, [contracts, income]);
 
             const filteredContracts = useMemo(() => {
@@ -187,7 +188,10 @@
                 activeTab === 'list' ? (
                     e('main', { className: "max-w-md mx-auto px-6 -mt-4" },
                         e('section', { className: "mb-6" },
-                            e('div', { className: "bg-blue-50 border border-blue-100 p-4 rounded-2xl flex gap-3 items-center" },
+                            e('div', { 
+                                onClick: stats.expensive ? null : openAddModal,
+                                className: `bg-blue-50 border border-blue-100 p-4 rounded-2xl flex gap-3 items-center ${!stats.expensive ? 'clickable ring-2 ring-blue-500 ring-offset-2' : ''}` 
+                            },
                                 e('div', { className: "bg-blue-600/10 p-2.5 rounded-xl text-blue-600" }, e(Icon, { name: 'zap', size: 18, fill: "currentColor" })),
                                 e('div', { className: "flex-1 text-left" },
                                     e('p', { className: "text-xs text-blue-900 leading-snug" }, 
@@ -236,12 +240,12 @@
                         )
                     )
                 ) : (
-                    // INSIGHTS TAB (MET GEWIJZIGDE CATEGORIE-OVERZICHT EN DYNAMISCHE STATUS)
+                    // INSIGHTS TAB
                     e('main', { className: "max-w-md mx-auto px-6 -mt-4 animate-sheet" },
                         e('section', { className: "bg-white p-8 rounded-[32px] border border-slate-100 shadow-card space-y-8 text-left" },
                             e('div', null,
                                 e('h3', { className: "heading-lg text-[#001D3D] mb-2" }, "Mijn inzicht"),
-                                e('p', { className: "text-sm text-slate-400 leading-relaxed" }, "Vul hier je maandelijks netto-inkomen in. Zo berekenen we welk deel van je loon naar vaste lasten gaat en wat je overhoudt.")
+                                e('p', { className: "text-sm text-slate-400 leading-relaxed" }, "Vul hier je maandelijks netto-inkomen in. Zo berekenen we welk deel van je loon naar vaste lasten gaat.")
                             ),
                             e('div', null,
                                 e('label', { className: "label-small text-slate-400 ml-2 mb-2 block" }, "Maandelijks netto loon"),
@@ -279,7 +283,20 @@
                                     "✅ Je financiële balans ziet er gezond uit."
                                 ),
                                 
-                                // CATEGORIE OVERZICHT TABEL
+                                // BESPARINGSTIP (NIEUW)
+                                stats.count > 0 && e('div', { className: "mt-8 bg-blue-600 p-6 rounded-[28px] text-white shadow-lg" },
+                                    e('div', { className: "flex items-center gap-2 mb-3" }, e(Icon, { name: 'piggy-bank', size: 20 }), e('h4', { className: "text-sm font-black uppercase tracking-wider" }, "Besparingsmogelijkheid")),
+                                    stats.expensiveSub ? (
+                                        e('div', { className: "space-y-2" },
+                                            e('p', { className: "text-xs opacity-80 leading-snug" }, `Door je abonnement op ${stats.expensiveSub.name} op te zeggen, bespaar je direct:`),
+                                            e('p', { className: "text-2xl font-black" }, `€${(getMonthlyCost(stats.expensiveSub) * 12).toLocaleString('nl-BE', { minimumFractionDigits: 0 })} per jaar`),
+                                            e('button', { onClick: () => { setActiveTab('list'); setSelectedContract(stats.expensiveSub); }, className: "mt-2 w-full bg-white/20 hover:bg-white/30 py-2 rounded-xl text-[10px] font-bold uppercase transition" }, "Bekijk contract")
+                                        )
+                                    ) : (
+                                        e('p', { className: "text-xs opacity-80" }, `Door je duurste contract (${stats.expensive.name}) te herzien, kun je mogelijk honderden euro's per jaar besparen.`)
+                                    )
+                                ),
+
                                 e('div', { className: "mt-8 space-y-4" },
                                     e('h4', { className: "label-small text-slate-400 border-b border-slate-100 pb-2" }, "Kosten per categorie"),
                                     stats.categoryData.map(cat => 
@@ -361,7 +378,7 @@
                                 e('button', { onClick: () => { const updated = {...selectedContract, status: selectedContract.status === 'active' ? 'archived' : 'active'}; setContracts(contracts.map(c => c.id === selectedContract.id ? updated : c)); setSelectedContract(null); }, className: "flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 bg-slate-100 text-slate-600" }, e(Icon, { name: 'archive', size: 18 }), selectedContract.status === 'active' ? 'Archiveren' : 'Activeren'),
                                 e('button', { onClick: () => { setIsEditing(true); setFormData(selectedContract); setIsModalOpen(true); setSelectedContract(null); }, className: "flex-1 bg-[#001D3D] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2" }, e(Icon, { name: 'edit-3', size: 18 }), "Bewerken")
                             ),
-                            e('button', { onClick: () => { if(confirm('Verwijderen?')) { setContracts(contracts.filter(c => c.id !== selectedContract.id)); setSelectedContract(null); } }, className: "w-full bg-red-50 text-red-600 py-4 rounded-2xl font-bold flex items-center justify-center gap-2" }, e(Icon, { name: 'trash-2', size: 18 }), "Verwijderen")
+                            e('button', { onClick: () => { setContracts(contracts.filter(c => c.id !== selectedContract.id)); setSelectedContract(null); }, className: "w-full bg-red-50 text-red-600 py-4 rounded-2xl font-bold flex items-center justify-center gap-2" }, e(Icon, { name: 'trash-2', size: 18 }), "Verwijderen")
                         )
                     )
                 )
