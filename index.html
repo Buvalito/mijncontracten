@@ -135,7 +135,7 @@
 
             const getMonthlyCost = (c) => {
                 let cost = parseFloat(c.cost || 0);
-                if (c.isShared && c.splitWith > 1) cost = cost / c.splitWith;
+                if (c.isShared && parseInt(c.splitWith) > 1) cost = cost / parseInt(c.splitWith);
                 if (c.frequency === 'yearly') return cost / 12;
                 if (c.frequency === 'quarterly') return cost / 3;
                 return cost;
@@ -258,8 +258,13 @@
                         onSubmit: (ev) => {
                             ev.preventDefault();
                             if (!formData.type) { alert('Selecteer een type'); return; }
-                            if (isEditing) setContracts(contracts.map(c => c.id === formData.id ? formData : c));
-                            else setContracts([...contracts, { ...formData, id: Date.now(), status: 'active' }]);
+                            // Zorg dat splitWith altijd minimaal 2 is bij opslaan als gedeeld
+                            const finalData = { 
+                                ...formData, 
+                                splitWith: formData.isShared ? Math.max(2, parseInt(formData.splitWith) || 2) : 1 
+                            };
+                            if (isEditing) setContracts(contracts.map(c => c.id === formData.id ? finalData : c));
+                            else setContracts([...contracts, { ...finalData, id: Date.now(), status: 'active' }]);
                             setIsModalOpen(false);
                         },
                         className: "bg-white w-full max-w-md card-rounded-lg p-8 shadow-2xl animate-sheet max-h-[90vh] overflow-y-auto text-left" 
@@ -297,7 +302,13 @@
                                 ),
                                 formData.isShared && e('div', { className: "flex items-center justify-between bg-white p-3 rounded-2xl shadow-sm" },
                                     e('span', { className: "text-xs font-bold text-slate-400" }, "Aantal personen:"),
-                                    e('input', { type: 'number', min: '2', className: "w-16 text-center font-black text-blue-600 border-none", value: formData.splitWith, onChange: ev => setFormData({...formData, splitWith: parseInt(ev.target.value) || 2}) })
+                                    e('input', { 
+                                        type: 'number', 
+                                        inputMode: 'numeric',
+                                        className: "w-16 text-center font-black text-blue-600 border-none", 
+                                        value: formData.splitWith, 
+                                        onChange: ev => setFormData({...formData, splitWith: ev.target.value}) 
+                                    })
                                 )
                             ),
                             e('div', null, 
@@ -326,7 +337,7 @@
                         e('div', { className: "grid grid-cols-2 gap-4 mb-8" },
                             e('div', { className: "bg-slate-50 p-5 rounded-[24px] border border-slate-100" }, 
                                 e('p', { className: "label-small text-slate-400 mb-1" }, selectedContract.isShared ? "Jouw aandeel" : "Totaal bedrag"), 
-                                e('p', { className: "text-xl font-black text-blue-600" }, `€${getMonthlyCost(selectedContract).toLocaleString('nl-BE', { minimumFractionDigits: 2 })}`)
+                                e('p', { className: "text-xl font-extrabold text-blue-600" }, `€${getMonthlyCost(selectedContract).toLocaleString('nl-BE', { minimumFractionDigits: 2 })}`)
                             ),
                             e('div', { className: "bg-slate-50 p-5 rounded-[24px] border border-slate-100" }, 
                                 e('p', { className: "label-small text-slate-400 mb-1" }, "Facturatie"), 
