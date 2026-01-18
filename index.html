@@ -47,7 +47,7 @@
         .scrollbar-hide::-webkit-scrollbar { display: none; }
 
         @keyframes slideInUp {
-            from { transform: translateY(100%); opacity: 0; }
+            from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
         .animate-sheet { animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -56,12 +56,19 @@
         .clickable:hover { opacity: 0.8; }
         .clickable:active { transform: scale(0.98); }
 
-        .scroll-container { cursor: grab; user-select: none; }
-        .scroll-container:active { cursor: grabbing; }
-
         .shadow-card { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); }
-        .shadow-card-hover { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
         .shadow-total-card { box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); }
+        
+        .tab-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0 28px 0;
+            z-index: 40;
+        }
     </style>
 </head>
 <body class="bg-[#F8FAFC]">
@@ -74,45 +81,10 @@
         const Icon = ({ name, size = 18, className = "", fill = "none" }) => 
             e('i', { 'data-lucide': name, className, style: { width: size, height: size, strokeWidth: 2, display: 'inline-block', fill } });
 
-        const useDragScroll = () => {
-            const ref = useRef(null);
-            const [isDragging, setIsDragging] = useState(false);
-            const [startX, setStartX] = useState(0);
-            const [scrollLeft, setScrollLeft] = useState(0);
-
-            useEffect(() => {
-                const el = ref.current;
-                if (!el) return;
-                const handleMouseDown = (e) => {
-                    setIsDragging(true);
-                    setStartX(e.pageX - el.offsetLeft);
-                    setScrollLeft(el.scrollLeft);
-                };
-                const handleMouseLeave = () => setIsDragging(false);
-                const handleMouseUp = () => setIsDragging(false);
-                const handleMouseMove = (e) => {
-                    if (!isDragging) return;
-                    e.preventDefault();
-                    const x = e.pageX - el.offsetLeft;
-                    const walk = (x - startX) * 2;
-                    el.scrollLeft = scrollLeft - walk;
-                };
-                el.addEventListener('mousedown', handleMouseDown);
-                el.addEventListener('mouseleave', handleMouseLeave);
-                el.addEventListener('mouseup', handleMouseUp);
-                el.addEventListener('mousemove', handleMouseMove);
-                return () => {
-                    el.removeEventListener('mousedown', handleMouseDown);
-                    el.removeEventListener('mouseleave', handleMouseLeave);
-                    el.removeEventListener('mouseup', handleMouseUp);
-                    el.removeEventListener('mousemove', handleMouseMove);
-                };
-            }, [isDragging, startX, scrollLeft]);
-            return ref;
-        };
-
         const App = () => {
-            const filterScrollRef = useDragScroll();
+            const [activeTab, setActiveTab] = useState('list');
+            const [income, setIncome] = useState(() => localStorage.getItem('pwa_income') || '');
+            
             const [contracts, setContracts] = useState(() => {
                 const saved = localStorage.getItem('pwa_contracts_v5');
                 return saved ? JSON.parse(saved) : [];
@@ -132,6 +104,7 @@
 
             useEffect(() => { lucide.createIcons(); });
             useEffect(() => { localStorage.setItem('pwa_contracts_v5', JSON.stringify(contracts)); }, [contracts]);
+            useEffect(() => { localStorage.setItem('pwa_income', income); }, [income]);
 
             const getMonthlyCost = (c) => {
                 let cost = parseFloat(c.cost || 0);
@@ -146,8 +119,17 @@
                 const totalMonthly = active.reduce((acc, curr) => acc + getMonthlyCost(curr), 0);
                 const subscriptionTotal = active.filter(c => c.type === 'Subscription').reduce((acc, curr) => acc + getMonthlyCost(curr), 0);
                 const expensive = active.length > 0 ? [...active].sort((a, b) => getMonthlyCost(b) - getMonthlyCost(a))[0] : null;
-                return { totalMonthly, expensive, subscriptionTotal, count: active.length };
-            }, [contracts]);
+                const ratio = income > 0 ? (totalMonthly / income) * 100 : 0;
+                const remaining = income ? (parseFloat(income) - totalMonthly) : 0;
+
+                // Kosten per categorie berekenen
+                const categoryData = ['Housing', 'Insurance', 'Subscription', 'Utilities', 'Other'].map(type => {
+                    const total = active.filter(c => c.type === type).reduce((acc, curr) => acc + getMonthlyCost(curr), 0);
+                    return { type, total };
+                }).filter(cat => cat.total > 0);
+
+                return { totalMonthly, expensive, subscriptionTotal, count: active.length, ratio, remaining, categoryData };
+            }, [contracts, income]);
 
             const filteredContracts = useMemo(() => {
                 return contracts
@@ -174,10 +156,11 @@
                 setIsModalOpen(true);
             };
 
-            return e('div', { className: "min-h-screen bg-[#F8FAFC] pb-12 selection:bg-blue-100" },
+            return e('div', { className: "min-h-screen bg-[#F8FAFC] pb-32" },
+                // HEADER
                 e('header', { className: "bg-white px-6 pt-12 pb-8 shadow-sm card-rounded-lg" },
                     e('div', { className: "max-w-md mx-auto" },
-                        e('div', { className: "flex justify-between items-center mb-6" },
+                        e('div', { className: "flex justify-between items-center mb-6 text-left" },
                             e('div', null,
                                 e('h1', { className: "heading-xl text-[#001D3D]" }, "Mijn contracten"),
                                 e('p', { className: "text-slate-400 text-sm font-medium" }, "Snel overzicht van je kosten")
@@ -192,7 +175,7 @@
                                     e('button', { onClick: () => setViewMode(viewMode === 'monthly' ? 'yearly' : 'monthly'), className: "bg-white/10 hover:bg-white/20 transition px-3 py-1 rounded-full text-[10px] font-bold uppercase" }, `Toon per ${viewMode === 'monthly' ? 'jaar' : 'maand'}`)
                                 ),
                                 e('h2', { className: "total-amount" }, `€${(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12).toLocaleString('nl-BE', { minimumFractionDigits: 2 })}`),
-                                e('div', { className: "mt-6 flex items-center gap-4 border-t border-white/10 pt-4" },
+                                e('div', { className: "mt-6 flex items-center gap-4 border-t border-white/10 pt-4 text-left" },
                                     e('div', null, e('p', { className: "label-small opacity-50" }, "Totaal"), e('p', { className: "text-sm font-bold" }, `${stats.count} ${stats.count === 1 ? 'contract' : 'contracten'}`))
                                 )
                             )
@@ -200,69 +183,141 @@
                     )
                 ),
 
-                e('main', { className: "max-w-md mx-auto px-6 -mt-4" },
-                    e('section', { className: "mb-6" },
-                        e('div', { className: `bg-blue-50 border border-blue-100 p-4 rounded-2xl flex gap-3 items-center ${contracts.length === 0 ? 'clickable' : ''}`, onClick: contracts.length === 0 ? openAddModal : undefined },
-                            e('div', { className: "bg-blue-600/10 p-2.5 rounded-xl text-blue-600" }, e(Icon, { name: 'zap', size: 18, fill: "currentColor" })),
-                            e('div', { className: "flex-1 text-left" },
-                                e('p', { className: "text-xs text-blue-900 leading-snug" }, 
-                                    stats.expensive 
-                                    ? e('span', null, 'Je grootste uitgave is ', e('strong', { className: "font-extrabold" }, stats.expensive.name), `. Abonnementen kosten je €${stats.subscriptionTotal.toLocaleString('nl-BE', { minimumFractionDigits: 2 })} per maand.`)
-                                    : e('strong', { className: "font-bold" }, "Voeg je eerste contract toe.")
+                // CONTENT
+                activeTab === 'list' ? (
+                    e('main', { className: "max-w-md mx-auto px-6 -mt-4" },
+                        e('section', { className: "mb-6" },
+                            e('div', { className: "bg-blue-50 border border-blue-100 p-4 rounded-2xl flex gap-3 items-center" },
+                                e('div', { className: "bg-blue-600/10 p-2.5 rounded-xl text-blue-600" }, e(Icon, { name: 'zap', size: 18, fill: "currentColor" })),
+                                e('div', { className: "flex-1 text-left" },
+                                    e('p', { className: "text-xs text-blue-900 leading-snug" }, 
+                                        stats.expensive 
+                                        ? e('span', null, 'Je grootste uitgave is ', e('strong', { className: "font-extrabold" }, stats.expensive.name), `. Abonnementen kosten je €${stats.subscriptionTotal.toLocaleString('nl-BE', { minimumFractionDigits: 2 })} per maand.`)
+                                        : e('strong', { className: "font-bold" }, "Voeg je eerste contract toe.")
+                                    )
+                                )
+                            )
+                        ),
+                        e('section', { className: "space-y-4 mb-6" },
+                            e('div', { className: "relative group text-left" },
+                                e(Icon, { name: 'search', className: "absolute left-4 top-1/2 -translate-y-1/2 text-slate-400", size: 18 }),
+                                e('input', { type: 'text', placeholder: "Zoek op naam, aanbieder...", className: "w-full bg-white border border-slate-200 input-rounded py-4 pl-12 pr-4 text-sm font-medium shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 transition-all", value: searchQuery, onChange: (ev) => setSearchQuery(ev.target.value) })
+                            ),
+                            e('div', { className: "flex gap-2 overflow-x-auto pb-2 scrollbar-hide" },
+                                ['All', 'Housing', 'Insurance', 'Subscription', 'Utilities', 'Other'].map(t => 
+                                    e('button', { key: t, onClick: () => setActiveFilter(t), className: `px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap border shrink-0 transition-all ${activeFilter === t ? 'bg-[#001D3D] text-white border-[#001D3D]' : 'bg-white text-slate-500 border-slate-200'}` }, t === 'All' ? 'Alles' : getTypeLabel(t))
+                                )
+                            ),
+                            e('div', { className: "flex items-center justify-between px-1" },
+                                e('div', { className: "flex bg-slate-200/50 p-1 rounded-xl" },
+                                    ['active', 'archived'].map(s => e('button', { key: s, onClick: () => setStatusFilter(s), className: `px-3 py-1.5 rounded-lg label-small transition-all ${statusFilter === s ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}` }, s === 'active' ? 'Actief' : 'Archief'))
+                                ),
+                                e('button', { onClick: openAddModal, className: "text-blue-600 font-bold text-xs flex items-center gap-1" }, e(Icon, { name: 'plus', size: 16 }), "Toevoegen")
+                            )
+                        ),
+                        e('section', { className: "space-y-3 text-left" },
+                            filteredContracts.map((contract) => 
+                                e('div', { key: contract.id, onClick: () => setSelectedContract(contract), className: "bg-white p-4 rounded-[24px] border border-slate-100 shadow-card flex items-center gap-4 clickable" },
+                                    e('div', { className: `w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${getIconColorClass(contract.type)}` }, e(Icon, { name: contract.type === 'Housing' ? 'home' : contract.type === 'Insurance' ? 'shield' : contract.type === 'Utilities' ? 'zap' : 'credit-card' })),
+                                    e('div', { className: "flex-1 min-w-0" },
+                                        e('h4', { className: "font-bold text-sm text-slate-900 truncate" }, contract.name),
+                                        e('div', { className: "flex items-center gap-1" },
+                                            contract.isShared && e(Icon, { name: 'users', size: 10, className: "text-blue-500" }),
+                                            e('p', { className: "label-small text-slate-400" }, contract.provider || getTypeLabel(contract.type))
+                                        )
+                                    ),
+                                    e('div', { className: "text-right shrink-0" },
+                                        e('p', { className: "font-extrabold text-[15px] text-slate-900" }, `€${getMonthlyCost(contract).toLocaleString('nl-BE', { minimumFractionDigits: 2 })}`),
+                                        e('p', { className: "text-[9px] text-slate-400 font-bold uppercase" }, "per maand")
+                                    ),
+                                    e(Icon, { name: 'chevron-right', size: 16, className: "text-slate-300" })
                                 )
                             )
                         )
-                    ),
-
-                    e('section', { className: "space-y-4 mb-6" },
-                        e('div', { className: "relative group" },
-                            e(Icon, { name: 'search', className: "absolute left-4 top-1/2 -translate-y-1/2 text-slate-400", size: 18 }),
-                            e('input', { type: 'text', placeholder: "Zoek op naam, aanbieder...", className: "w-full bg-white border border-slate-200 input-rounded py-4 pl-12 pr-4 text-sm font-medium shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 transition-all", value: searchQuery, onChange: (ev) => setSearchQuery(ev.target.value) })
-                        ),
-                        e('div', { ref: filterScrollRef, className: "flex gap-2 overflow-x-auto pb-2 scrollbar-hide scroll-container" },
-                            ['All', 'Housing', 'Insurance', 'Subscription', 'Utilities', 'Other'].map(t => 
-                                e('button', { key: t, onClick: () => setActiveFilter(t), className: `px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap border shrink-0 transition-all ${activeFilter === t ? 'bg-[#001D3D] text-white border-[#001D3D] shadow-lg' : 'bg-white text-slate-500 border-slate-200'}` }, t === 'All' ? 'Alles' : getTypeLabel(t))
-                            )
-                        ),
-                        e('div', { className: "flex items-center justify-between px-1" },
-                            e('div', { className: "flex bg-slate-200/50 p-1 rounded-xl" },
-                                ['active', 'archived'].map(s => e('button', { key: s, onClick: () => setStatusFilter(s), className: `px-3 py-1.5 rounded-lg label-small transition-all ${statusFilter === s ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}` }, s === 'active' ? 'Actief' : 'Archief'))
+                    )
+                ) : (
+                    // INSIGHTS TAB (MET GEWIJZIGDE CATEGORIE-OVERZICHT EN DYNAMISCHE STATUS)
+                    e('main', { className: "max-w-md mx-auto px-6 -mt-4 animate-sheet" },
+                        e('section', { className: "bg-white p-8 rounded-[32px] border border-slate-100 shadow-card space-y-8 text-left" },
+                            e('div', null,
+                                e('h3', { className: "heading-lg text-[#001D3D] mb-2" }, "Mijn inzicht"),
+                                e('p', { className: "text-sm text-slate-400 leading-relaxed" }, "Vul hier je maandelijks netto-inkomen in. Zo berekenen we welk deel van je loon naar vaste lasten gaat en wat je overhoudt.")
                             ),
-                            e('button', { onClick: openAddModal, className: "text-blue-600 font-bold text-xs flex items-center gap-1 hover:bg-blue-50 px-3 py-2 rounded-xl transition" }, e(Icon, { name: 'plus', size: 16 }), "Toevoegen")
-                        )
-                    ),
-
-                    e('section', { className: "space-y-3" },
-                        filteredContracts.map((contract) => 
-                            e('div', { key: contract.id, onClick: () => setSelectedContract(contract), className: "bg-white p-4 rounded-[24px] border border-slate-100 shadow-card hover:shadow-card-hover transition-all active:scale-[0.98] cursor-pointer flex items-center gap-4" },
-                                e('div', { className: `w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${getIconColorClass(contract.type)}` }, e(Icon, { name: contract.type === 'Housing' ? 'home' : contract.type === 'Insurance' ? 'shield' : contract.type === 'Utilities' ? 'zap' : 'credit-card' })),
-                                e('div', { className: "flex-1 min-w-0 text-left" },
-                                    e('h4', { className: "font-bold text-sm text-slate-900 truncate" }, contract.name),
-                                    e('div', { className: "flex items-center gap-1" },
-                                        contract.isShared && e(Icon, { name: 'users', size: 10, className: "text-blue-500" }),
-                                        e('p', { className: "label-small text-slate-400" }, contract.provider || 'Geen aanbieder')
+                            e('div', null,
+                                e('label', { className: "label-small text-slate-400 ml-2 mb-2 block" }, "Maandelijks netto loon"),
+                                e('div', { className: "flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border-2 border-transparent focus-within:border-blue-500/20 focus-within:bg-white transition-all" },
+                                    e('span', { className: "text-xl font-black text-slate-300" }, "€"),
+                                    e('input', { 
+                                        type: 'number', 
+                                        placeholder: "0,00", 
+                                        className: "w-full bg-transparent border-none text-xl font-black focus:ring-0 text-slate-900",
+                                        value: income,
+                                        onChange: (ev) => setIncome(ev.target.value)
+                                    })
+                                )
+                            ),
+                            income > 0 && e('div', { className: "pt-4 border-t border-slate-50" },
+                                e('div', { className: "flex justify-between items-end mb-4" },
+                                    e('div', null,
+                                        e('p', { className: "label-small text-slate-400" }, "Vaste lasten"),
+                                        e('p', { className: "text-2xl font-black text-[#001D3D]" }, `${stats.ratio.toFixed(1)}%`)
+                                    ),
+                                    e('div', { className: "text-right" },
+                                        e('p', { className: "label-small text-slate-400" }, "Na lasten"),
+                                        e('p', { className: `text-2xl font-black ${stats.remaining < 0 ? 'text-red-500' : 'text-emerald-500'}` }, `€${stats.remaining.toLocaleString('nl-BE', { minimumFractionDigits: 0 })}`)
                                     )
                                 ),
-                                e('div', { className: "text-right shrink-0" },
-                                    e('p', { className: "font-extrabold text-[15px] text-slate-900" }, `€${getMonthlyCost(contract).toLocaleString('nl-BE', { minimumFractionDigits: 2 })}`),
-                                    e('p', { className: "text-[9px] text-slate-400 font-bold uppercase tracking-tighter" }, "per maand")
+                                e('div', { className: "w-full h-4 bg-slate-100 rounded-full overflow-hidden" },
+                                    e('div', { 
+                                        className: `h-full transition-all duration-1000 ${stats.ratio > 80 ? 'bg-red-500' : stats.ratio > 50 ? 'bg-orange-400' : 'bg-emerald-500'}`,
+                                        style: { width: `${Math.min(stats.ratio, 100)}%` }
+                                    })
                                 ),
-                                e(Icon, { name: 'chevron-right', size: 16, className: "text-slate-300" })
+                                e('div', { className: `mt-4 p-4 rounded-2xl text-center text-[12px] font-bold ${stats.ratio > 80 ? 'bg-red-50 text-red-600' : stats.ratio > 50 ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'}` }, 
+                                    stats.ratio > 80 ? "⚠️ Je vaste lasten zijn erg hoog!" :
+                                    stats.ratio > 50 ? "⚠️ Meer dan de helft van je loon gaat naar vaste lasten." :
+                                    "✅ Je financiële balans ziet er gezond uit."
+                                ),
+                                
+                                // CATEGORIE OVERZICHT TABEL
+                                e('div', { className: "mt-8 space-y-4" },
+                                    e('h4', { className: "label-small text-slate-400 border-b border-slate-100 pb-2" }, "Kosten per categorie"),
+                                    stats.categoryData.map(cat => 
+                                        e('div', { key: cat.type, className: "flex justify-between items-center" },
+                                            e('div', { className: "flex items-center gap-2" },
+                                                e('div', { className: `w-2 h-2 rounded-full ${cat.type === 'Housing' ? 'bg-orange-400' : cat.type === 'Insurance' ? 'bg-emerald-400' : 'bg-blue-400'}` }),
+                                                e('span', { className: "text-xs font-bold text-slate-600" }, getTypeLabel(cat.type))
+                                            ),
+                                            e('div', { className: "text-right" },
+                                                e('span', { className: "text-xs font-black text-slate-900" }, `€${cat.total.toLocaleString('nl-BE', { minimumFractionDigits: 0 })}`),
+                                                e('span', { className: "text-[10px] text-slate-400 ml-2 font-bold" }, `${((cat.total / income) * 100).toFixed(1)}%`)
+                                            )
+                                        )
+                                    )
+                                )
                             )
                         )
                     )
                 ),
 
+                // TAB BAR
+                e('nav', { className: "tab-bar" },
+                    e('button', { onClick: () => setActiveTab('list'), className: `flex flex-col items-center gap-1 transition-all ${activeTab === 'list' ? 'text-blue-600' : 'text-slate-300'}` },
+                        e(Icon, { name: 'list', size: 24, fill: activeTab === 'list' ? 'currentColor' : 'none' }),
+                        e('span', { className: "text-[10px] font-bold uppercase" }, "Lijst")
+                    ),
+                    e('button', { onClick: () => setActiveTab('insights'), className: `flex flex-col items-center gap-1 transition-all ${activeTab === 'insights' ? 'text-blue-600' : 'text-slate-300'}` },
+                        e(Icon, { name: 'pie-chart', size: 24, fill: activeTab === 'insights' ? 'currentColor' : 'none' }),
+                        e('span', { className: "text-[10px] font-bold uppercase" }, "Inzicht")
+                    )
+                ),
+
+                // MODAL ADD/EDIT
                 isModalOpen && e('div', { className: "fixed inset-0 bg-[#001D3D]/60 backdrop-blur-md z-[60] flex items-end justify-center p-4" },
                     e('form', { 
                         onSubmit: (ev) => {
                             ev.preventDefault();
-                            if (!formData.type) { alert('Selecteer een type'); return; }
-                            // Zorg dat splitWith altijd minimaal 2 is bij opslaan als gedeeld
-                            const finalData = { 
-                                ...formData, 
-                                splitWith: formData.isShared ? Math.max(2, parseInt(formData.splitWith) || 2) : 1 
-                            };
+                            const finalData = { ...formData, splitWith: formData.isShared ? Math.max(2, parseInt(formData.splitWith) || 2) : 1 };
                             if (isEditing) setContracts(contracts.map(c => c.id === formData.id ? finalData : c));
                             else setContracts([...contracts, { ...finalData, id: Date.now(), status: 'active' }]);
                             setIsModalOpen(false);
@@ -274,88 +329,39 @@
                             e('button', { type: 'button', onClick: () => setIsModalOpen(false), className: "p-2 bg-slate-50 text-slate-400 rounded-full" }, e(Icon, { name: 'x', size: 20 }))
                         ),
                         e('div', { className: "space-y-4" },
-                            e('div', null, 
-                                e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Naam"), 
-                                e('input', { required: true, className: "w-full bg-slate-50 rounded-2xl py-4 px-5 text-sm font-bold border-none", value: formData.name, onChange: ev => setFormData({...formData, name: ev.target.value}) })
-                            ),
-                            e('div', null, 
-                                e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Aanbieder"), 
-                                e('input', { className: "w-full bg-slate-50 rounded-2xl py-4 px-5 text-sm font-bold border-none", value: formData.provider, onChange: ev => setFormData({...formData, provider: ev.target.value}) })
-                            ),
+                            e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Naam"), e('input', { required: true, className: "w-full bg-slate-50 rounded-2xl py-4 px-5 text-sm font-bold border-none", value: formData.name, onChange: ev => setFormData({...formData, name: ev.target.value}) })),
+                            e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Aanbieder"), e('input', { className: "w-full bg-slate-50 rounded-2xl py-4 px-5 text-sm font-bold border-none", value: formData.provider, onChange: ev => setFormData({...formData, provider: ev.target.value}) })),
                             e('div', { className: "grid grid-cols-2 gap-4" },
-                                e('div', null, 
-                                    e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Type"), 
-                                    e('select', { required: true, className: "w-full bg-slate-50 rounded-2xl py-4 px-5 text-sm font-bold border-none appearance-none", value: formData.type, onChange: ev => setFormData({...formData, type: ev.target.value}) }, 
-                                        e('option', { value: '', disabled: true }, 'Selecteer'),
-                                        ['Subscription', 'Insurance', 'Housing', 'Utilities', 'Other'].map(opt => e('option', { key: opt, value: opt }, getTypeLabel(opt)))
-                                    )
-                                ),
-                                e('div', null, 
-                                    e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Totaal Bedrag (€)"), 
-                                    e('input', { type: 'number', step: '0.01', required: true, className: "w-full bg-slate-50 rounded-2xl py-4 px-5 text-sm font-bold border-none", value: formData.cost, onChange: ev => setFormData({...formData, cost: ev.target.value}) })
-                                )
+                                e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Type"), e('select', { required: true, className: "w-full bg-slate-50 rounded-2xl py-4 px-5 text-sm font-bold border-none appearance-none", value: formData.type, onChange: ev => setFormData({...formData, type: ev.target.value}) }, e('option', { value: '', disabled: true }, 'Selecteer'), ['Subscription', 'Insurance', 'Housing', 'Utilities', 'Other'].map(opt => e('option', { key: opt, value: opt }, getTypeLabel(opt))))),
+                                e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Totaal Bedrag (€)"), e('input', { type: 'number', step: '0.01', required: true, className: "w-full bg-slate-50 rounded-2xl py-4 px-5 text-sm font-bold border-none", value: formData.cost, onChange: ev => setFormData({...formData, cost: ev.target.value}) }))
                             ),
                             e('div', { className: "bg-slate-50 p-5 rounded-3xl space-y-3" },
-                                e('label', { className: "flex items-center gap-3 clickable" },
-                                    e('input', { type: 'checkbox', className: "w-5 h-5 rounded-lg border-slate-300", checked: formData.isShared, onChange: ev => setFormData({...formData, isShared: ev.target.checked}) }),
-                                    e('span', { className: "text-sm font-bold text-slate-700" }, "Kosten delen met anderen?")
-                                ),
-                                formData.isShared && e('div', { className: "flex items-center justify-between bg-white p-3 rounded-2xl shadow-sm" },
-                                    e('span', { className: "text-xs font-bold text-slate-400" }, "Aantal personen:"),
-                                    e('input', { 
-                                        type: 'number', 
-                                        inputMode: 'numeric',
-                                        className: "w-16 text-center font-black text-blue-600 border-none", 
-                                        value: formData.splitWith, 
-                                        onChange: ev => setFormData({...formData, splitWith: ev.target.value}) 
-                                    })
-                                )
+                                e('label', { className: "flex items-center gap-3 clickable" }, e('input', { type: 'checkbox', className: "w-5 h-5 rounded-lg border-slate-300", checked: formData.isShared, onChange: ev => setFormData({...formData, isShared: ev.target.checked}) }), e('span', { className: "text-sm font-bold text-slate-700" }, "Kosten delen met anderen")),
+                                formData.isShared && e('div', { className: "flex items-center justify-between bg-white p-3 rounded-2xl shadow-sm" }, e('span', { className: "text-xs font-bold text-slate-400" }, "Aantal personen:"), e('input', { type: 'number', inputMode: 'numeric', className: "w-16 text-center font-black text-blue-600 border-none", value: formData.splitWith, onChange: ev => setFormData({...formData, splitWith: ev.target.value}) }))
                             ),
-                            e('div', null, 
-                                e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Facturatie"), 
-                                e('div', { className: "flex bg-slate-100 p-1 rounded-2xl" }, 
-                                    ['monthly', 'quarterly', 'yearly'].map(f => 
-                                        e('button', { key: f, type: 'button', onClick: () => setFormData({...formData, frequency: f}), className: `flex-1 py-3 rounded-xl text-xs font-bold transition-all ${formData.frequency === f ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500'}` }, f === 'monthly' ? 'Maand' : f === 'quarterly' ? '3 Maand' : 'Jaar')
-                                    )
-                                )
-                            ),
+                            e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Facturatie"), e('div', { className: "flex bg-slate-100 p-1 rounded-2xl" }, ['monthly', 'quarterly', 'yearly'].map(f => e('button', { key: f, type: 'button', onClick: () => setFormData({...formData, frequency: f}), className: `flex-1 py-3 rounded-xl text-xs font-bold transition-all ${formData.frequency === f ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500'}` }, f === 'monthly' ? 'Maand' : f === 'quarterly' ? '3 Maand' : 'Jaar')))),
                             e('button', { type: 'submit', className: "w-full bg-[#001D3D] text-white py-5 button-rounded font-bold text-lg shadow-xl mt-4 flex items-center justify-center gap-2" }, e(Icon, { name: 'save', size: 20 }), isEditing ? 'Opslaan' : 'Toevoegen')
                         )
                     )
                 ),
 
+                // DETAIL MODAL
                 selectedContract && e('div', { className: "fixed inset-0 bg-[#001D3D]/40 backdrop-blur-sm z-50 flex items-end justify-center" },
                     e('div', { className: "bg-white w-full max-w-md rounded-t-[40px] p-8 shadow-2xl animate-sheet text-left" },
                         e('div', { className: "flex justify-between items-start mb-8" },
-                            e('div', null, 
-                                e('span', { className: "label-small bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg mb-2 inline-block" }, getTypeLabel(selectedContract.type)), 
-                                e('h2', { className: "heading-lg text-[#001D3D] leading-tight" }, selectedContract.name), 
-                                e('p', { className: "text-slate-400 font-medium" }, selectedContract.provider || 'Geen aanbieder')
-                            ),
+                            e('div', null, e('span', { className: "label-small bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg mb-2 inline-block" }, getTypeLabel(selectedContract.type)), e('h2', { className: "heading-lg text-[#001D3D] leading-tight" }, selectedContract.name), e('p', { className: "text-slate-400 font-medium" }, selectedContract.provider || 'Geen aanbieder')),
                             e('button', { onClick: () => setSelectedContract(null), className: "p-3 bg-slate-50 text-slate-400 rounded-2xl" }, e(Icon, { name: 'x', size: 20 }))
                         ),
                         e('div', { className: "grid grid-cols-2 gap-4 mb-8" },
-                            e('div', { className: "bg-slate-50 p-5 rounded-[24px] border border-slate-100" }, 
-                                e('p', { className: "label-small text-slate-400 mb-1" }, selectedContract.isShared ? "Jouw aandeel" : "Totaal bedrag"), 
-                                e('p', { className: "text-xl font-extrabold text-blue-600" }, `€${getMonthlyCost(selectedContract).toLocaleString('nl-BE', { minimumFractionDigits: 2 })}`)
-                            ),
-                            e('div', { className: "bg-slate-50 p-5 rounded-[24px] border border-slate-100" }, 
-                                e('p', { className: "label-small text-slate-400 mb-1" }, "Facturatie"), 
-                                e('p', { className: "text-sm font-bold text-slate-700" }, 
-                                    getFrequencyLabel(selectedContract.frequency) + (selectedContract.isShared ? ` / ${selectedContract.splitWith} personen` : '')
-                                )
-                            )
+                            e('div', { className: "bg-slate-50 p-5 rounded-[24px] border border-slate-100" }, e('p', { className: "label-small text-slate-400 mb-1" }, selectedContract.isShared ? "Jouw aandeel" : "Totaal bedrag"), e('p', { className: "text-xl font-extrabold text-blue-600" }, `€${getMonthlyCost(selectedContract).toLocaleString('nl-BE', { minimumFractionDigits: 2 })}`)),
+                            e('div', { className: "bg-slate-50 p-5 rounded-[24px] border border-slate-100" }, e('p', { className: "label-small text-slate-400 mb-1" }, "Facturatie"), e('p', { className: "text-sm font-bold text-slate-700" }, getFrequencyLabel(selectedContract.frequency) + (selectedContract.isShared ? ` / ${selectedContract.splitWith} personen` : '')))
                         ),
                         e('div', { className: "space-y-3" },
                             e('div', { className: "flex gap-3" },
-                                e('button', { onClick: () => { 
-                                    const updated = {...selectedContract, status: selectedContract.status === 'active' ? 'archived' : 'active'};
-                                    setContracts(contracts.map(c => c.id === selectedContract.id ? updated : c)); 
-                                    setSelectedContract(null); 
-                                }, className: "flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 bg-slate-100 text-slate-600" }, e(Icon, { name: 'archive', size: 18 }), selectedContract.status === 'active' ? 'Archiveren' : 'Activeren'),
+                                e('button', { onClick: () => { const updated = {...selectedContract, status: selectedContract.status === 'active' ? 'archived' : 'active'}; setContracts(contracts.map(c => c.id === selectedContract.id ? updated : c)); setSelectedContract(null); }, className: "flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 bg-slate-100 text-slate-600" }, e(Icon, { name: 'archive', size: 18 }), selectedContract.status === 'active' ? 'Archiveren' : 'Activeren'),
                                 e('button', { onClick: () => { setIsEditing(true); setFormData(selectedContract); setIsModalOpen(true); setSelectedContract(null); }, className: "flex-1 bg-[#001D3D] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2" }, e(Icon, { name: 'edit-3', size: 18 }), "Bewerken")
                             ),
-                            e('button', { onClick: () => { setContracts(contracts.filter(c => c.id !== selectedContract.id)); setSelectedContract(null); }, className: "w-full bg-red-50 text-red-600 py-4 rounded-2xl font-bold flex items-center justify-center gap-2" }, e(Icon, { name: 'trash-2', size: 18 }), "Verwijderen")
+                            e('button', { onClick: () => { if(confirm('Verwijderen?')) { setContracts(contracts.filter(c => c.id !== selectedContract.id)); setSelectedContract(null); } }, className: "w-full bg-red-50 text-red-600 py-4 rounded-2xl font-bold flex items-center justify-center gap-2" }, e(Icon, { name: 'trash-2', size: 18 }), "Verwijderen")
                         )
                     )
                 )
