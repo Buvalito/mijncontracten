@@ -236,7 +236,7 @@
                         )
                     )
                 ) : (
-                    e('main', { className: "max-w-md mx-auto px-6 -mt-4 animate-sheet" },
+                    e('main', { className: "max-w-md mx-auto px-6 -mt-4 animate-sheet space-y-4" },
                         e('section', { className: "bg-white p-8 rounded-[32px] border border-slate-100 shadow-card space-y-8 text-left" },
                             e('div', null,
                                 e('h3', { className: "heading-lg text-[#001D3D] mb-2" }, "Mijn inzicht"),
@@ -294,6 +294,24 @@
                                     )
                                 )
                             )
+                        ),
+                        e('section', { className: "bg-white p-8 rounded-[32px] border border-slate-100 shadow-card text-left" },
+                            e('h4', { className: "heading-lg text-[#001D3D] mb-4 text-[18px]" }, "Besparingstips"),
+                            e('div', { className: "space-y-4" },
+                                [
+                                    { icon: 'zap', title: 'Energiekosten', text: 'Kies voor een variabel of vast contract op basis van de huidige marktwaarde. Vergelijken bespaart gemiddeld €300.' },
+                                    { icon: 'shield-check', title: 'Verzekeringen', text: 'Loop jaarlijks je polis na. Heb je die extra diefstalverzekering nog wel nodig voor je oude auto?' },
+                                    { icon: 'trash-2', title: 'Slapende abonnementen', text: 'Gooi abonnementen die je minder dan 1x per maand gebruikt eruit. Je kunt ze altijd later weer activeren.' }
+                                ].map((tip, idx) => 
+                                    e('div', { key: idx, className: "flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100" },
+                                        e('div', { className: "bg-blue-100 text-blue-600 p-2 rounded-xl self-start" }, e(Icon, { name: tip.icon, size: 18 })),
+                                        e('div', null,
+                                            e('p', { className: "text-sm font-bold text-slate-800" }, tip.title),
+                                            e('p', { className: "text-xs text-slate-500 mt-1 leading-relaxed" }, tip.text)
+                                        )
+                                    )
+                                )
+                            )
                         )
                     )
                 ),
@@ -332,7 +350,7 @@
                             e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Naam"), e('input', { required: true, className: "w-full bg-slate-50 rounded-2xl py-4 px-5 text-sm font-bold border-none", value: formData.name, onChange: ev => setFormData({...formData, name: ev.target.value}) })),
                             e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Aanbieder"), e('input', { className: "w-full bg-slate-50 rounded-2xl py-4 px-5 text-sm font-bold border-none", value: formData.provider, onChange: ev => setFormData({...formData, provider: ev.target.value}) })),
                             e('div', { className: "grid grid-cols-2 gap-4" },
-                                e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Type"), e('select', { required: true, className: "w-full bg-slate-50 rounded-2xl py-4 px-5 text-sm font-bold border-none appearance-none", value: formData.type, onChange: ev => setFormData({...formData, type: ev.target.value}) }, e('option', { value: '', disabled: true }, 'Selecteer'), ['Subscription', 'Insurance', 'Housing', 'Utilities', 'Other'].map(opt => e('option', { key: opt, value: opt }, getTypeLabel(opt))))),
+                                e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Type"), e('select', { required: true, className: "w-full bg-slate-50 rounded-2xl py-4 px-5 text-sm font-bold border-none appearance-none", value: formData.type, onChange: ev => setFormData({...formData, type: ev.target.value}) }, e('option', { value: '', disabled: true }, 'Selecteer...'), ['Subscription', 'Insurance', 'Housing', 'Utilities', 'Other'].map(opt => e('option', { key: opt, value: opt }, getTypeLabel(opt))))),
                                 e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-1 block" }, "Totaal Bedrag (€)"), e('input', { type: 'number', step: '0.01', required: true, className: "w-full bg-slate-50 rounded-2xl py-4 px-5 text-sm font-bold border-none", value: formData.cost, onChange: ev => setFormData({...formData, cost: ev.target.value}) }))
                             ),
                             e('div', { className: "bg-slate-50 p-5 rounded-3xl space-y-3" },
