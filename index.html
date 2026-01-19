@@ -45,6 +45,7 @@
         .input-rounded { border-radius: 20px; }
 
         .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
         @keyframes slideInUp {
             from { transform: translateY(20px); opacity: 0; }
@@ -57,7 +58,6 @@
         .clickable:active { transform: scale(0.98); }
 
         .shadow-card { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); }
-        .shadow-total-card { box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); }
         
         .tab-bar {
             position: fixed;
@@ -69,6 +69,9 @@
             padding: 12px 0 28px 0;
             z-index: 40;
         }
+
+        .grab-scroll { cursor: grab; user-select: none; }
+        .grab-scroll:active { cursor: grabbing; }
     </style>
 </head>
 <body class="bg-[#F8FAFC]">
@@ -101,6 +104,27 @@
                 name: '', provider: '', type: '', cost: '', frequency: 'monthly', 
                 isShared: false, splitWith: 2 
             });
+
+            // Mouse swipe functionality for filters
+            const filterRef = useRef(null);
+            const [isDown, setIsDown] = useState(false);
+            const [startX, setStartX] = useState(0);
+            const [scrollLeft, setScrollLeft] = useState(0);
+
+            const handleMouseDown = (ex) => {
+                setIsDown(true);
+                setStartX(ex.pageX - filterRef.current.offsetLeft);
+                setScrollLeft(filterRef.current.scrollLeft);
+            };
+            const handleMouseLeave = () => setIsDown(false);
+            const handleMouseUp = () => setIsDown(false);
+            const handleMouseMove = (ex) => {
+                if (!isDown) return;
+                ex.preventDefault();
+                const x = ex.pageX - filterRef.current.offsetLeft;
+                const walk = (x - startX) * 2;
+                filterRef.current.scrollLeft = scrollLeft - walk;
+            };
 
             useEffect(() => { lucide.createIcons(); });
             useEffect(() => { localStorage.setItem('pwa_contracts_v5', JSON.stringify(contracts)); }, [contracts]);
@@ -161,7 +185,7 @@
                         e('div', { className: "flex justify-between items-center mb-6 text-left" },
                             e('div', null,
                                 e('h1', { className: "heading-xl text-[#001D3D]" }, "Mijn contracten"),
-                                e('p', { className: "text-slate-400 text-sm font-medium" }, "Snel overzicht van je kosten")
+                                e('p', { className: "text-slate-400 text-sm font-medium" }, "Al je vaste kosten in één helder overzicht")
                             ),
                             e('div', { className: "bg-blue-50 p-2 rounded-full text-blue-600" }, e(Icon, { name: 'check-circle-2', size: 24 }))
                         ),
@@ -174,7 +198,7 @@
                                 ),
                                 e('h2', { className: "total-amount" }, `€${(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12).toLocaleString('nl-BE', { minimumFractionDigits: 2 })}`),
                                 e('div', { className: "mt-6 flex items-center gap-4 border-t border-white/10 pt-4 text-left" },
-                                    e('div', null, e('p', { className: "label-small opacity-50" }, "Totaal"), e('p', { className: "text-sm font-bold" }, `${stats.count} ${stats.count === 1 ? 'contract' : 'contracten'}`))
+                                    e('div', null, e('p', { className: "label-small opacity-50" }, "Aantal"), e('p', { className: "text-sm font-bold" }, `${stats.count} ${stats.count === 1 ? 'contract' : 'contracten'}`))
                                 )
                             )
                         )
@@ -203,7 +227,14 @@
                                 e(Icon, { name: 'search', className: "absolute left-4 top-1/2 -translate-y-1/2 text-slate-400", size: 18 }),
                                 e('input', { type: 'text', placeholder: "Zoek op naam, aanbieder...", className: "w-full bg-white border border-slate-200 input-rounded py-4 pl-12 pr-4 text-sm font-medium shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 transition-all", value: searchQuery, onChange: (ev) => setSearchQuery(ev.target.value) })
                             ),
-                            e('div', { className: "flex gap-2 overflow-x-auto pb-2 scrollbar-hide" },
+                            e('div', { 
+                                ref: filterRef,
+                                onMouseDown: handleMouseDown,
+                                onMouseLeave: handleMouseLeave,
+                                onMouseUp: handleMouseUp,
+                                onMouseMove: handleMouseMove,
+                                className: "flex gap-2 overflow-x-auto pb-2 scrollbar-hide grab-scroll active:cursor-grabbing" 
+                            },
                                 ['All', 'Housing', 'Insurance', 'Subscription', 'Utilities', 'Other'].map(t => 
                                     e('button', { key: t, onClick: () => setActiveFilter(t), className: `px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap border shrink-0 transition-all ${activeFilter === t ? 'bg-[#001D3D] text-white border-[#001D3D]' : 'bg-white text-slate-500 border-slate-200'}` }, t === 'All' ? 'Alles' : getTypeLabel(t))
                                 )
@@ -262,7 +293,7 @@
                                         e('p', { className: "text-2xl font-black text-[#001D3D]" }, `${stats.ratio.toFixed(1)}%`)
                                     ),
                                     e('div', { className: "text-right" },
-                                        e('p', { className: "label-small text-slate-400" }, "Na lasten"),
+                                        e('p', { className: "label-small text-slate-400" }, "Overschot"),
                                         e('p', { className: `text-2xl font-black ${stats.remaining < 0 ? 'text-red-500' : 'text-emerald-500'}` }, `€${stats.remaining.toLocaleString('nl-BE', { minimumFractionDigits: 0 })}`)
                                     )
                                 ),
@@ -295,24 +326,49 @@
                                 )
                             )
                         ),
-                        e('section', { className: "bg-white p-8 rounded-[32px] border border-slate-100 shadow-card text-left" },
-                            e('h4', { className: "heading-lg text-[#001D3D] mb-4 text-[18px]" }, "Besparingstips"),
-                            e('div', { className: "space-y-4" },
-                                [
-                                    { icon: 'zap', title: 'Energiekosten', text: 'Kies voor een variabel of vast contract op basis van de huidige marktwaarde. Vergelijken bespaart gemiddeld €300.' },
-                                    { icon: 'shield-check', title: 'Verzekeringen', text: 'Loop jaarlijks je polis na. Heb je die extra diefstalverzekering nog wel nodig voor je oude auto?' },
-                                    { icon: 'trash-2', title: 'Slapende abonnementen', text: 'Gooi abonnementen die je minder dan 1x per maand gebruikt eruit. Je kunt ze altijd later weer activeren.' }
-                                ].map((tip, idx) => 
-                                    e('div', { key: idx, className: "flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100" },
-                                        e('div', { className: "bg-blue-100 text-blue-600 p-2 rounded-xl self-start" }, e(Icon, { name: tip.icon, size: 18 })),
-                                        e('div', null,
-                                            e('p', { className: "text-sm font-bold text-slate-800" }, tip.title),
-                                            e('p', { className: "text-xs text-slate-500 mt-1 leading-relaxed" }, tip.text)
-                                        )
-                                    )
-                                )
-                            )
-                        )
+                        e('div', { className: "space-y-4 pt-6" },
+    e('h4', { className: "heading-lg text-[#001D3D] text-[18px] px-2" }, "Tips om slim te besparen"),
+    [
+        { 
+            icon: 'zap', 
+            color: 'text-amber-600', 
+            bg: 'bg-amber-100', 
+            title: 'Energiekosten', 
+            text: 'Wie elk jaar de V-test doet en wisselt van leverancier, scoort telkens nieuwe welkomstkortingen. Overstappen is makkelijker dan je denkt en bespaart je makkelijk €400 per jaar.' 
+        },
+        { 
+            icon: 'smartphone', 
+            color: 'text-blue-600', 
+            bg: 'bg-blue-100', 
+            title: 'Telecom', 
+            text: 'Betaal niet voor data die je niet verbruikt. Dankzij Easy Switch stap je in 5 minuten over naar een goedkoper abonnement. Veel Vlamingen besparen zo €10 per maand op hun pack.' 
+        },
+        { 
+            icon: 'shield-check', 
+            color: 'text-emerald-600', 
+            bg: 'bg-emerald-100', 
+            title: 'Verzekeringen', 
+            text: 'Scan op dubbele polissen. Heb je pechverhelping via je bank én je autoverzekering? Of een aparte fietsverzekering die al in je familiale zit? Schrap de dubbels en bespaar direct.' 
+        },
+        { 
+            icon: 'trash-2', 
+            color: 'text-rose-600', 
+            bg: 'bg-rose-100', 
+            title: 'Abonnementen', 
+            text: 'Check je rekeningen op "slapende" diensten die je maar één keer per maand (of minder) gebruikt, zoals die tweede streamingdienst of krantenapp die je nooit opent. Gebruik je ze niet? Zeg ze dan op.'
+        }
+    ].map((tip, idx) => 
+        e('div', { key: idx, className: "bg-white p-6 rounded-[28px] border border-slate-100 shadow-card flex gap-4 text-left" },
+            e('div', { className: `${tip.bg} ${tip.color} p-3 rounded-2xl self-start shrink-0` }, 
+                e(Icon, { name: tip.icon, size: 20 })
+            ),
+            e('div', null,
+                e('p', { className: "text-[15px] font-bold text-slate-800" }, tip.title),
+                e('p', { className: "text-sm text-slate-400 mt-1 leading-relaxed" }, tip.text)
+            )
+        )
+    )
+)
                     )
                 ),
 
