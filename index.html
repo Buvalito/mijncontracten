@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mijn contracten - Al je vaste kosten in één helder overzicht</title>
+    <title>Contractly - Al je vaste kosten in één helder overzicht</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Contracten">
+    <meta name="apple-mobile-web-app-title" content="Contractly">
     <link rel="apple-touch-icon" href="https://iili.io/fgGphnn.png">
     <link rel="icon" type="image/x-icon" href="https://iili.io/fgGphnn.png">
     <meta name="theme-color" content="#001D3D">
@@ -81,6 +81,21 @@
 
         .grab-scroll { cursor: grab; user-select: none; }
         .grab-scroll:active { cursor: grabbing; }
+
+        /* Animation for shrinking header */
+        .header-stats-container {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 200px;
+            opacity: 1;
+            overflow: hidden;
+        }
+        .header-stats-container.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0;
+            padding-top: 0;
+            border-top-width: 0;
+        }
     </style>
 </head>
 <body class="bg-[#F8FAFC]">
@@ -113,6 +128,18 @@
                 name: '', provider: '', type: '', cost: '', frequency: 'monthly', 
                 isShared: false, splitWith: 2 
             });
+
+            // Helper to format currency input with thousands separator
+            const formatNumber = (val) => {
+                if (!val) return '';
+                const num = val.toString().replace(/\D/g, '');
+                return num.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            };
+
+            const handleIncomeChange = (ev) => {
+                const rawValue = ev.target.value.replace(/\./g, '');
+                setIncome(rawValue);
+            };
 
             // Mouse swipe functionality for filters
             const filterRef = useRef(null);
@@ -189,24 +216,26 @@
             };
 
             return e('div', { className: "min-h-screen bg-[#F8FAFC] pb-32" },
-                e('header', { className: "bg-white px-6 pt-12 pb-8 shadow-sm card-rounded-lg" },
+                e('header', { className: "bg-white px-6 pt-12 pb-8 shadow-sm card-rounded-lg transition-all duration-500" },
                     e('div', { className: "max-w-md mx-auto" },
                         e('div', { className: "flex justify-between items-center mb-6 text-left" },
                             e('div', null,
-                                e('h1', { className: "heading-xl text-[#001D3D]" }, "Mijn contracten"),
+                                e('h1', { className: "heading-xl text-[#001D3D]" }, 
+                                    "Contractly.be"
+                                ),
                                 e('p', { className: "text-slate-400 text-sm font-medium" }, "Al je vaste kosten in één helder overzicht")
                             ),
-                            e('div', { className: "bg-blue-50 p-2 rounded-full text-blue-600" }, e(Icon, { name: 'check-circle-2', size: 24 }))
+                            e('div', { className: "bg-blue-50 p-2.5 rounded-full text-blue-600 shadow-sm" }, e(Icon, { name: 'scan-search', size: 24 }))
                         ),
-                        e('div', { className: "bg-[#0B1A2D] card-rounded p-8 text-white relative overflow-hidden shadow-total-card" },
+                        e('div', { className: `bg-[#0B1A2D] card-rounded transition-all duration-500 text-white relative overflow-hidden ${activeTab === 'insights' ? 'p-8' : 'p-8'}` },
                             e('div', { className: "absolute -right-10 -top-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl" }),
                             e('div', { className: "relative z-10" },
                                 e('div', { className: "flex justify-between items-center mb-2" },
                                     e('p', { className: "total-label" }, `Totaal per ${viewMode === 'monthly' ? 'maand' : 'jaar'}`),
                                     e('button', { onClick: () => setViewMode(viewMode === 'monthly' ? 'yearly' : 'monthly'), className: "bg-white/10 hover:bg-white/20 transition px-3 py-1 rounded-full text-[10px] font-bold uppercase" }, `Toon per ${viewMode === 'monthly' ? 'jaar' : 'maand'}`)
                                 ),
-                                e('h2', { className: "total-amount" }, `€${(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12).toLocaleString('nl-BE', { minimumFractionDigits: 2 })}`),
-                                e('div', { className: "mt-6 flex items-center gap-4 border-t border-white/10 pt-4 text-left" },
+                                e('h2', { className: `total-amount transition-all duration-500 ${activeTab === 'insights' ? 'text-4xl' : 'text-4xl'}` }, `€${(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12).toLocaleString('nl-BE', { minimumFractionDigits: 2 })}`),
+                                e('div', { className: `header-stats-container mt-6 border-t border-white/10 pt-4 text-left ${activeTab === 'insights' ? 'collapsed' : ''}` },
                                     e('div', null, e('p', { className: "label-small opacity-50" }, "Aantal"), e('p', { className: "text-sm font-bold" }, `${stats.count} ${stats.count === 1 ? 'contract' : 'contracten'}`))
                                 )
                             )
@@ -256,6 +285,10 @@
                             )
                         ),
                         e('section', { className: "space-y-3 text-left" },
+                            e('div', { className: "flex items-center justify-between mb-2 px-1" },
+                                e('h3', { className: "text-xs font-bold text-slate-400 uppercase tracking-wider" }, "Mijn contracten"),
+                                filteredContracts.length === 0 && e('span', { className: "text-[10px] text-slate-300" }, "Geen items gevonden")
+                            ),
                             filteredContracts.map((contract) => 
                                 e('div', { key: contract.id, onClick: () => setSelectedContract(contract), className: "bg-white p-4 rounded-[24px] border border-slate-100 shadow-card flex items-center gap-4 clickable" },
                                     e('div', { className: `w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${getIconColorClass(contract.type)}` }, e(Icon, { name: contract.type === 'Housing' ? 'home' : contract.type === 'Insurance' ? 'shield' : contract.type === 'Utilities' ? 'zap' : 'credit-card' })),
@@ -272,6 +305,10 @@
                                     ),
                                     e(Icon, { name: 'chevron-right', size: 16, className: "text-slate-300" })
                                 )
+                            ),
+                            contracts.length === 0 && e('div', { className: "text-center py-12 px-8 border-2 border-dashed border-slate-100 rounded-[32px]" },
+                                e('p', { className: "text-slate-400 text-sm mb-4" }, "Je hebt nog geen contracten toegevoegd."),
+                                e('button', { onClick: openAddModal, className: "bg-slate-100 text-slate-600 px-6 py-3 rounded-2xl text-xs font-bold" }, "Eerste contract toevoegen")
                             )
                         )
                     )
@@ -280,18 +317,19 @@
                         e('section', { className: "bg-white p-8 rounded-[32px] border border-slate-100 shadow-card space-y-8 text-left" },
                             e('div', null,
                                 e('h3', { className: "heading-lg text-[#001D3D] mb-2" }, "Mijn inzicht"),
-                                e('p', { className: "text-sm text-slate-400 leading-relaxed" }, "Vul hier je maandelijks netto-inkomen in. Zo berekenen we welk deel van je loon naar vaste lasten gaat en hoeveel je overhoudt.")
+                                e('p', { className: "text-sm text-slate-400 leading-relaxed" }, "Vul hier je maandelijks netto-inkomen in. Zo zie je welk deel van je loon naar vaste lasten gaat en hoeveel je overhoudt.")
                             ),
                             e('div', null,
                                 e('label', { className: "label-small text-slate-400 ml-2 mb-2 block" }, "Maandelijks netto loon"),
                                 e('div', { className: "flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border-2 border-transparent focus-within:border-blue-500/20 focus-within:bg-white transition-all" },
                                     e('span', { className: "text-xl font-black text-slate-300" }, "€"),
                                     e('input', { 
-                                        type: 'number', 
-                                        placeholder: "0,00", 
+                                        type: 'text', 
+                                        inputMode: 'numeric',
+                                        placeholder: "0", 
                                         className: "w-full bg-transparent border-none text-xl font-black focus:ring-0 text-slate-900",
-                                        value: income,
-                                        onChange: (ev) => setIncome(ev.target.value)
+                                        value: formatNumber(income),
+                                        onChange: handleIncomeChange
                                     })
                                 )
                             ),
@@ -315,7 +353,7 @@
                                 e('div', { className: `mt-4 p-4 rounded-2xl text-center text-[12px] font-bold ${stats.ratio > 80 ? 'bg-red-50 text-red-600' : stats.ratio > 50 ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'}` }, 
                                     stats.ratio > 80 ? "⚠️ Je vaste lasten zijn erg hoog!" :
                                     stats.ratio > 50 ? "⚠️ Meer dan de helft van je loon gaat naar vaste lasten." :
-                                    "✅ Je financiële balans ziet er gezond uit."
+                                    "✅ Je financiële balans ziet er gezond uit. Goed bezig!"
                                 ),
 
                                 e('div', { className: "mt-8 space-y-4" },
@@ -371,7 +409,7 @@ e('div', { className: "space-y-4 pt-6" },
                                     bg: 'bg-rose-50', 
                                     border: 'border-rose-100',
                                     title: 'Abonnementen', 
-                                    text: 'Check je rekeningen op "slapende" diensten. Gebruik je die tweede streamingdienst niet? Zeg ze dan direct op.'
+                                    text: 'Check je rekeningen op "slapende" diensten. Gebruik je die tweede streamingdienst niet? Zeg ze op en bespaar 5 tot 10 euro per maand.'
                                 }
                             ].map((tip, idx) => 
                                 e('div', { 
@@ -468,10 +506,3 @@ e('div', { className: "space-y-4 pt-6" },
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
