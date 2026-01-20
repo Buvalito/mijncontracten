@@ -1,7 +1,7 @@
 {
-  "short_name": "Contracten",
+  "short_name": "Contractly",
   "name": "Mijn contracten",
-  "description": "Beheer je maandelijkse vaste lasten",
+  "description": "Al je vaste kosten in één helder overzicht",
   "icons": [
     {
       "src": "https://iili.io/fgGphnn.png",
@@ -21,3 +21,4 @@
   "theme_color": "#001D3D",
   "background_color": "#F8FAFC"
 }
+
