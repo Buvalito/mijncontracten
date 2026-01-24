@@ -66,7 +66,7 @@
         .clickable:hover { opacity: 0.8; }
         .clickable:active { transform: scale(0.98); }
 
-        .shadow-card { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05); }
+        .shadow-card { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.025); }
         
         .tab-bar {
             position: fixed;
@@ -103,7 +103,6 @@
         }
         .tip-card:active { transform: scale(0.98); }
 
-        /* Sticky Header Logic */
         .sticky-header {
             position: fixed;
             top: 0; left: 0; right: 0;
@@ -158,11 +157,10 @@
                 isShared: false, splitWith: 2 
             });
 
-            // Benchmark data per household type
+            // Benchmarks per PERSOON (gebaseerd op gemiddelde Vlaamse uitgaven 2024-2025)
             const benchmarks = {
-                single: { Utilities: 160, Insurance: 110, Subscription: 65 },
-                couple: { Utilities: 210, Insurance: 160, Subscription: 90 },
-                family: { Utilities: 290, Insurance: 210, Subscription: 130 }
+                single: { Housing: 850, Utilities: 150, Insurance: 120, Subscription: 70 },
+                couple: { Housing: 650, Utilities: 120, Insurance: 100, Subscription: 55 }
             };
 
             useEffect(() => {
@@ -266,7 +264,6 @@
             };
 
             return e('div', { className: "min-h-screen bg-[#F8FAFC] pb-24" },
-                // STICKY HEADER
                 e('div', { className: `sticky-header ${isHeaderSticky ? 'visible' : ''}` },
                     e('div', { className: "flex items-center gap-3" },
                          e('div', { className: "bg-blue-500/20 w-10 h-10 flex items-center justify-center rounded-2xl text-blue-400 shadow-inner" }, e(Icon, { name: 'receipt-text', size: 20 })),
@@ -295,7 +292,7 @@
                             e('div', { className: "relative z-10" },
                                 e('div', { className: "flex justify-between items-center mb-2" },
                                     e('p', { className: "total-label" }, `Totaal per ${viewMode === 'monthly' ? 'maand' : 'jaar'}`),
-                                    e('button', { onClick: () => setViewMode(viewMode === 'monthly' ? 'yearly' : 'monthly'), className: "bg-white/10 hover:bg-white/20 transition px-3 py-1 rounded-full text-[10px] font-bold uppercase" }, `Toon per ${viewMode === 'monthly' ? 'jaar' : 'maand'}`)
+                                    e('button', { onClick: () => setViewMode(viewMode === 'monthly' ? 'yearly' : 'monthly'), className: "bg-white/10 hover:bg-white/20 border border-white/10 text-white px-3 py-1 rounded-2xl text-[10px] font-bold uppercase transition-all backdrop-blur-sm" }, `Toon per ${viewMode === 'monthly' ? 'jaar' : 'maand'}`)
                                 ),
                                 e('h2', { className: `total-amount transition-all duration-500 text-4xl` }, `€${(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12).toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`),
                                 e('div', { className: `header-stats-container mt-6 border-t border-white/10 pt-4 text-left ${activeTab === 'insights' || activeTab === 'savings' ? 'collapsed' : ''}` },
@@ -400,9 +397,8 @@
                                 e('label', { className: "label-small text-slate-400 ml-2 mb-2 block" }, "Mijn Huishouden"),
                                 e('div', { className: "flex bg-slate-100 p-1 rounded-2xl" },
                                     [
-                                        { id: 'single', label: 'Alleen' },
-                                        { id: 'couple', label: 'Koppel' },
-                                        { id: 'family', label: 'Gezin' }
+                                        { id: 'single', label: 'Alleenstaand' },
+                                        { id: 'couple', label: 'Samenwonend' }
                                     ].map(h => e('button', { 
                                         key: h.id, 
                                         onClick: () => setHouseholdType(h.id),
@@ -432,22 +428,6 @@
                                 stats.ratio > 80 ? "⚠️ Je vaste lasten zijn erg hoog!" :
                                 stats.ratio > 50 ? "⚠️ Meer dan de helft van je loon gaat naar vaste lasten." :
                                 "✅ Je financiële balans ziet er gezond uit. Goed bezig!"
-                            ),
-
-                            e('div', { className: "mt-8 space-y-4" },
-                                e('h4', { className: "label-small text-slate-400 border-b border-slate-100 pb-2" }, "Kosten per categorie"),
-                                stats.categoryData.length > 0 ? stats.categoryData.map(cat => 
-                                    e('div', { key: cat.type, className: "flex justify-between items-center" },
-                                        e('div', { className: "flex items-center gap-2" },
-                                            e('div', { className: `w-2 h-2 rounded-full ${cat.type === 'Housing' ? 'bg-orange-400' : cat.type === 'Insurance' ? 'bg-emerald-400' : 'bg-blue-400'}` }),
-                                            e('span', { className: "text-xs font-bold text-slate-600" }, getTypeLabel(cat.type))
-                                        ),
-                                        e('div', { className: "text-right" },
-                                            e('span', { className: "text-xs font-black text-slate-900" }, `€${cat.total.toLocaleString('nl-BE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`),
-                                            e('span', { className: "text-[10px] text-slate-400 ml-2 font-bold" }, `${((cat.total / income) * 100).toFixed(1)}%`)
-                                        )
-                                    )
-                                ) : e('p', { className: "text-[11px] text-slate-400 italic" }, "Voeg eerst contracten toe om de verdeling per categorie te zien.")
                             )
                         )
                     ),
@@ -455,13 +435,18 @@
                     e('section', { className: "bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm text-left" },
                         e('div', { className: "mb-6" },
                             e('h4', { className: "text-lg font-bold mb-1 text-slate-900" }, "Hoe scoort jouw budget?"),
-                            e('p', { className: "text-[11px] text-slate-400 font-medium" }, `Vergelijk jouw kosten met het gemiddelde van andere ${householdType === 'single' ? 'alleenstaanden' : householdType === 'couple' ? 'koppels' : 'gezinnen'} in Vlaanderen.`)
+                            e('p', { className: "text-xs text-slate-400 leading-relaxed" }, 
+                                householdType === 'single' 
+                                ? e('span', null, "We vergelijken jouw persoonlijke budget met dat van een gemiddelde ", e('strong', null, "alleenstaande"), " Vlaming.") 
+                                : e('span', null, "We vergelijken jouw aandeel in de kosten met de gemiddelde individuele last van een ", e('strong', null, "samenwonende"), " Vlaming.")
+                            )
                         ),
                         e('div', { className: "space-y-6" },
                             [
-                                { label: 'Nutsvoorziening', key: 'Utilities', color: 'bg-amber-400' },
-                                { label: 'Verzekering', key: 'Insurance', color: 'bg-emerald-400' },
-                                { label: 'Abonnement', key: 'Subscription', color: 'bg-indigo-400' }
+                                { label: 'Wonen', key: 'Housing', color: 'bg-orange-400' },
+                                { label: 'Energie & Water', key: 'Utilities', color: 'bg-amber-400' },
+                                { label: 'Verzekeringen', key: 'Insurance', color: 'bg-emerald-400' },
+                                { label: 'Abonnementen', key: 'Subscription', color: 'bg-indigo-400' }
                             ].map(item => {
                                 const avg = benchmarks[householdType][item.key];
                                 const user = stats.categoryData.find(c => c.type === item.key)?.total || 0;
@@ -494,7 +479,7 @@
                             ),
                             e('div', { className: "flex items-center gap-2" },
                                 e('div', { className: "w-3 h-1.5 rounded-full bg-blue-500" }),
-                                e('span', { className: "text-[10px] font-bold text-slate-400 uppercase" }, "Jouw Kosten")
+                                e('span', { className: "text-[10px] font-bold text-slate-400 uppercase" }, "Jouw Aandeel")
                             )
                         )
                     ),
@@ -565,7 +550,7 @@
                                 bg: 'bg-indigo-50', 
                                 btnColor: 'bg-blue-600',
                                 title: 'Abonnementen', 
-                                text: 'Check je rekeningen op "slapende" diensten. Gebruik je die tweede streamingdienst niet? Zeg ze op en bespaar gemiddeld 10 tot 15 euro per maand.',
+                                text: 'Check je rekeningen op \"slapende\" diensten. Gebruik je die tweede streamingdienst niet? Zeg ze op en bespaar gemiddeld 10 tot 15 euro per maand.',
                                 link: 'https://www.sepastop.eu/nl-be/',
                                 label: 'Hulp bij opzeggen'
                             }
@@ -688,4 +673,3 @@
     </script>
 </body>
 </html>
-
