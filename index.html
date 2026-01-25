@@ -44,7 +44,7 @@
 
         .heading-xl { font-size: 2rem; font-weight: 800; letter-spacing: -0.025em; line-height: 1.2; }
         .heading-lg { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.015em; }
-        .total-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; opacity: 0.6; }
+        .total-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; opacity: 0.6; }
         .total-amount { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.025em; }
         .label-small { font-size: 0.625rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
 
@@ -279,12 +279,12 @@
                          e('div', { className: "bg-blue-500/20 w-10 h-10 flex items-center justify-center rounded-2xl text-blue-400 shadow-inner" }, e(Icon, { name: 'receipt-text', size: 20 })),
                          e('div', { className: "flex flex-col" },
                             e('p', { className: "text-[10px] font-medium opacity-50 uppercase tracking-widest leading-none mb-1" }, `Per ${viewMode === 'monthly' ? 'maand' : 'jaar'}`),
-                            e('p', { className: "text-xl font-extrabold leading-none" }, `€${(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12).toLocaleString('nl-BE', { minimumFractionDigits: 2 })}`)
+                            e('p', { className: "text-xl font-extrabold leading-none" }, `€${(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12).toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`)
                         )
                     ),
                     e('button', { 
                         onClick: () => setViewMode(viewMode === 'monthly' ? 'yearly' : 'monthly'), 
-                        className: "bg-white/10 hover:bg-white/20 border border-white/10 text-white px-4 py-2.5 rounded-2xl text-[10px] font-bold uppercase transition-all backdrop-blur-sm" 
+                        className: "bg-white/10 border border-white/10 text-white px-4 py-2.5 rounded-2xl text-[10px] font-bold uppercase transition-all backdrop-blur-sm" 
                     }, viewMode === 'monthly' ? 'Toon per jaar' : 'Toon per maand')
                 ),
 
@@ -302,7 +302,7 @@
                             e('div', { className: "relative z-10" },
                                 e('div', { className: "flex justify-between items-center mb-2" },
                                     e('p', { className: "total-label" }, `Totaal per ${viewMode === 'monthly' ? 'maand' : 'jaar'}`),
-                                    e('button', { onClick: () => setViewMode(viewMode === 'monthly' ? 'yearly' : 'monthly'), className: "bg-white/10 hover:bg-white/20 border border-white/10 text-white px-3 py-1 rounded-2xl text-[10px] font-bold uppercase transition-all backdrop-blur-sm" }, `Toon per ${viewMode === 'monthly' ? 'jaar' : 'maand'}`)
+                                    e('button', { onClick: () => setViewMode(viewMode === 'monthly' ? 'yearly' : 'monthly'), className: "bg-white/10 border border-white/10 text-white px-3 py-1 rounded-2xl text-[10px] font-bold uppercase transition-all backdrop-blur-sm" }, `Toon per ${viewMode === 'monthly' ? 'jaar' : 'maand'}`)
                                 ),
                                 e('h2', { className: `total-amount transition-all duration-500 text-4xl` }, `€${(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12).toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`),
                                 e('div', { className: `header-stats-container mt-6 border-t border-white/10 pt-4 text-left ${activeTab === 'insights' || activeTab === 'savings' ? 'collapsed' : ''}` },
@@ -457,7 +457,7 @@
 
                     e('section', { className: "bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm text-left" },
                         e('div', { className: "mb-6" },
-                            e('h4', { className: "text-lg font-bold mb-1 text-slate-900" }, "Hoe scoort jouw budget?"),
+                            e('h4', { className: "text-lg font-bold mb-1 text-slate-900" }, "Mijn uitgaven in beeld"),
                             e('p', { className: "text-xs text-slate-400 leading-relaxed" }, 
                                 householdType === 'single' 
                                 ? e('span', null, "We vergelijken jouw budgettering met dat van een gemiddelde ", e('strong', null, "alleenstaande"), " Vlaming.") 
@@ -622,18 +622,18 @@
                             e(Icon, { name: 'calculator', size: 16, className: "text-blue-400" }),
                             e('p', { className: "label-small text-blue-400" }, "Besparings-scan")
                         ),
-                        e('h4', { className: "text-lg font-bold mb-1" }, "Jouw besparingspotentieel"),
-                        e('p', { className: "text-xs text-slate-400 leading-relaxed mb-6" }, "Op basis van jouw huidige maandelijkse vaste kosten van €" + stats.totalMonthly.toLocaleString('nl-BE', { minimumFractionDigits: 2 }) + ":"),
+                        e('h4', { className: "text-lg font-bold mb-1" }, "Mijn bespaaroverzicht"),
+                        e('p', { className: "text-xs text-slate-400 leading-relaxed mb-6" }, "Op basis van jouw huidige maandelijkse vaste kosten van €" + stats.totalMonthly.toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ":"),
                         e('div', { className: "space-y-4" },
                             [5, 10, 15].map(pct => 
                                 e('div', { key: pct, className: "flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/10" },
                                     e('div', null,
                                         e('p', { className: "text-[10px] uppercase font-bold text-slate-500" }, pct + "% besparing"),
-                                        e('p', { className: "text-sm font-bold text-emerald-400" }, "€" + (stats.totalMonthly * (pct/100)).toLocaleString('nl-BE', { minimumFractionDigits: 2 }) + " / maand")
+                                        e('p', { className: "text-sm font-bold text-emerald-400" }, "€" + (stats.totalMonthly * (pct/100)).toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " / maand")
                                     ),
                                     e('div', { className: "text-right" },
                                         e('p', { className: "text-[10px] uppercase font-bold text-slate-500" }, "Jaarlijks"),
-                                        e('p', { className: "text-sm font-black text-white" }, "€" + (stats.totalMonthly * (pct/100) * 12).toLocaleString('nl-BE', { minimumFractionDigits: 0 }))
+                                        e('p', { className: "text-sm font-black text-white" }, "€" + (stats.totalMonthly * (pct/100) * 12).toLocaleString('nl-BE', { minimumFractionDigits: 0, maximumFractionDigits: 2 }))
                                     )
                                 )
                             )
@@ -644,7 +644,7 @@
                 e('nav', { className: "tab-bar" },
                     e('button', { onClick: () => handleTabChange('list'), className: `flex-1 flex flex-col items-center gap-1 transition-all ${activeTab === 'list' ? 'text-blue-600' : 'text-slate-300'}` },
                         e(Icon, { name: 'list', size: 24, fill: activeTab === 'list' ? 'currentColor' : 'none' }),
-                        e('span', { className: "text-[10px] font-bold uppercase" }, "Lijst")
+                        e('span', { className: "text-[10px] font-bold uppercase" }, "Contracten")
                     ),
                     e('button', { onClick: () => handleTabChange('insights'), className: `flex-1 flex flex-col items-center gap-1 transition-all ${activeTab === 'insights' ? 'text-blue-600' : 'text-slate-300'}` },
                         e(Icon, { name: 'pie-chart', size: 24, fill: activeTab === 'insights' ? 'currentColor' : 'none' }),
