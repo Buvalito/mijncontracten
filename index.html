@@ -409,7 +409,7 @@
                     ),
                     e('section', { className: "space-y-3 text-left capitalize" },
                         e('div', { className: "flex items-center justify-between mb-2 px-1" },
-                            e('h3', { className: "text-xs font-medium text-slate-400 uppercase tracking-wider" }, "Mijn contracten"),
+                            e('h3', { className: "text-xs font-semibold text-slate-400 uppercase tracking-wider" }, "Mijn contracten"),
                             filteredContracts.length === 0 && contracts.length > 0 && e('span', { className: "text-[12px] text-slate-300 normal-case" }, "Geen items gevonden")
                         ),
                         filteredContracts.map((contract) => 
@@ -779,3 +779,4 @@
     </script>
 </body>
 </html>
+
