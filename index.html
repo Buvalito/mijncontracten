@@ -382,7 +382,7 @@
                     e('strong', { className: "font-extrabold text-blue-600" }, stats.expensive.name), 
                     `. Abonnementen kosten je €${stats.subscriptionTotal.toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} per maand.`
                   )
-                : e('strong', { className: "font-bold text-blue-600" }, "Voeg je eerste contract toe.")
+                : e('strong', { className: "font-bold text-slate-700" }, "Voeg je eerste contract toe.")
             )
         )
     )
@@ -431,7 +431,7 @@
                         ),
                         contracts.length === 0 && e('div', { className: "text-center py-12 px-8 border-2 border-dashed border-slate-200 rounded-[12px]" },
                             e('p', { className: "text-slate-400 text-sm mb-4 normal-case" }, "Je hebt nog geen contracten toegevoegd."),
-                            e('button', { onClick: openAddModal, className: "bg-blue-50 text-blue-600 px-5 py-3 rounded-xl text-base font-bold" }, "Eerste contract toevoegen")
+                            e('button', { onClick: openAddModal, className: "bg-blue-600 text-white px-5 py-3 rounded-full text-base font-bold" }, "Eerste contract toevoegen")
                         )
                     )
                 ),
