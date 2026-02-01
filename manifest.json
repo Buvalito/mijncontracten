@@ -11,17 +11,18 @@
   "background_color": "#F8FAFC",
   "icons": [
     {
-      "src": "https://iili.io/fgGphnn.png",
+      "src": "./index.html/Logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://iili.io/fgGphnn.png",
+      "src": "./index.html/Logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ]
 }
+
 
