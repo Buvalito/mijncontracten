@@ -45,6 +45,17 @@
             -webkit-tap-highlight-color: transparent;
             font-weight: 500;
             color: var(--text-main);
+            /* Tekst selectie overal uitschakelen */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        /* Input velden moeten wel selecteerbaar blijven voor invoer */
+        input, textarea, select {
+            user-select: text;
+            -webkit-user-select: text;
         }
 
         .fraunces-h1 { 
@@ -91,7 +102,7 @@
             z-index: 40;
         }
 
-        .grab-scroll { cursor: grab; user-select: none; }
+        .grab-scroll { cursor: grab; user-select: none; -webkit-user-drag: none; }
         .grab-scroll:active { cursor: grabbing; }
 
         .header-stats-container {
@@ -298,15 +309,18 @@
                 // STICKY HEADER
                 e('div', { className: `sticky-header ${isHeaderSticky ? 'visible' : ''}` },
     e('div', { className: "sticky-nav-white" },
-        e('div', { className: "flex items-center justify-between w-full" }, // items-center voor horizontale uitlijning
+        e('div', { className: "flex items-center justify-between w-full" }, 
             e('div', { className: "flex items-center" },
-                // Logo als tekst
                 e('span', { className: "text-lg font-semibold tracking-tight text-slate-900" }, "Contractly")
             ),
-            e('div', { className: "text-right leading-none" },
-                // Titel: grijs, klein, uppercase en wijder uit elkaar
-                e('h1', { className: "text-slate-400 text-[14px] font-semibold uppercase tracking-wider" }, 
-                    activeTab === 'list' ? "Contracten" : activeTab === 'insights' ? "Inzicht" : "Besparen"
+            e('div', { className: "flex items-center gap-3" },
+                e('div', { className: "text-right leading-none" },
+                    e('h1', { className: "text-slate-400 text-[14px] font-semibold uppercase tracking-wider" }, 
+                        activeTab === 'list' ? "Contracten" : activeTab === 'insights' ? "Inzicht" : "Besparen"
+                    )
+                ),
+                e('button', { onClick: openAddModal, className: "w-8 h-8 flex items-center justify-center bg-blue-600 text-white rounded-full transition-transform active:scale-90" }, 
+                    e(Icon, { name: 'plus', size: 18 })
                 )
             )
         )
@@ -325,15 +339,18 @@
 
 e('header', { className: "px-5 pt-6 pb-8 card-rounded-lg transition-all duration-500" },
     e('div', { className: "max-w-md mx-auto" },
-        e('div', { className: "flex items-center justify-between mb-6" }, // items-center ipv items-end voor perfecte uitlijning met tekst
+        e('div', { className: "flex items-center justify-between mb-6" }, 
             e('div', { className: "flex items-center" },
-                // Logo als tekst
                 e('span', { className: "text-lg font-semibold tracking-tight text-slate-900" }, "Contractly")
             ),
-            e('div', { className: "text-right leading-none" },
-                // Titel: grijs, klein, uppercase en wijder uit elkaar
-                e('h1', { className: "text-slate-400 text-[14px] font-bold uppercase tracking-wider" }, 
-                    activeTab === 'list' ? "Contracten" : activeTab === 'insights' ? "Inzicht" : "Besparen"
+            e('div', { className: "flex items-center gap-3" },
+                e('div', { className: "text-right leading-none" },
+                    e('h1', { className: "text-slate-400 text-[14px] font-bold uppercase tracking-wider" }, 
+                        activeTab === 'list' ? "Contracten" : activeTab === 'insights' ? "Inzicht" : "Besparen"
+                    )
+                ),
+                e('button', { onClick: openAddModal, className: "w-8 h-8 flex items-center justify-center bg-blue-600 text-white rounded-full transition-transform active:scale-90" }, 
+                    e(Icon, { name: 'plus', size: 18 })
                 )
             )
         ),
@@ -359,7 +376,6 @@ e('header', { className: "px-5 pt-6 pb-8 card-rounded-lg transition-all duration
         onClick: stats.expensive ? null : openAddModal,
         className: `bg-blue-50 border border-blue-100 p-4 rounded-xl flex gap-3 items-start ${!stats.expensive ? 'clickable' : ''}` 
     },
-        // De sparkles: subtiel, blauw en zonder eigen box
         e(Icon, { 
             name: 'sparkle', 
             size: 14, 
@@ -367,7 +383,6 @@ e('header', { className: "px-5 pt-6 pb-8 card-rounded-lg transition-all duration
             fill: "currentColor" 
         }),
         e('div', { className: "flex-1 text-left" },
-            // Het prominente titeltje
             e('span', { className: "block text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-1" }, 
                 "Samenvatting"
             ),
@@ -378,7 +393,7 @@ e('header', { className: "px-5 pt-6 pb-8 card-rounded-lg transition-all duration
                     e('strong', { className: "font-extrabold text-blue-600" }, stats.expensive.name), 
                     `. Abonnementen kosten je €${stats.subscriptionTotal.toLocaleString('nl-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} per maand.`
                   )
-                : e('strong', { className: "font-bold text-slate-700" }, "Voeg je eerste contract toe.")
+                : e('strong', { className: "font-medium text-slate-700" }, "Voeg je eerste contract toe.")
             )
         )
     )
@@ -404,10 +419,10 @@ e('header', { className: "px-5 pt-6 pb-8 card-rounded-lg transition-all duration
                         )
                     ),
                     e('section', { className: "space-y-3 text-left capitalize" },
-                        e('div', { className: "flex items-baseline justify-between mb-2 px-1" }, // items-baseline ipv items-center
+                        e('div', { className: "flex items-baseline justify-between mb-2 px-1" }, 
     e('h3', { className: "text-xs font-bold text-slate-400 uppercase tracking-wider" }, "Mijn contracten"),
     filteredContracts.length === 0 && contracts.length > 0 && e('span', { 
-        className: "text-[12px] text-slate-300 normal-case leading-none" // leading-none toegevoegd
+        className: "text-[12px] text-slate-300 normal-case leading-none" 
     }, "Geen items gevonden")
 ),
                         filteredContracts.map((contract) => 
@@ -427,7 +442,7 @@ e('header', { className: "px-5 pt-6 pb-8 card-rounded-lg transition-all duration
                                 e(Icon, { name: 'chevron-right', size: 16, className: "text-slate-300" })
                             )
                         ),
-                        contracts.length === 0 && e('div', { className: "text-center py-12 px-8 border-2 border-dashed border-slate-200 rounded-[12px]" },
+                        contracts.length === 0 && e('div', { className: "text-center py-12 px-8 border-1 border-dashed border-slate-200 rounded-[12px]" },
                             e('p', { className: "text-slate-400 text-sm mb-4 normal-case" }, "Je hebt nog geen contracten toegevoegd."),
                             e('button', { onClick: openAddModal, className: "bg-blue-600 text-white px-5 py-3 rounded-full text-base font-bold" }, "Eerste contract toevoegen")
                         )
@@ -485,7 +500,7 @@ e('header', { className: "px-5 pt-6 pb-8 card-rounded-lg transition-all duration
             className: `h-full transition-all duration-1000 ${
                 stats.ratio > 80 ? 'bg-red-500' : 
                 stats.ratio > 50 ? 'bg-orange-400' : 
-                'bg-emerald-500' // Veranderd van blue-600 naar emerald-500
+                'bg-emerald-500' 
             }`,
             style: { width: `${Math.min(stats.ratio, 100)}%` }
         })
@@ -494,12 +509,12 @@ e('header', { className: "px-5 pt-6 pb-8 card-rounded-lg transition-all duration
         className: `mt-4 p-4 rounded-xl text-center text-[14px] font-bold ${
             stats.ratio > 80 ? 'bg-red-50 text-red-600' : 
             stats.ratio > 50 ? 'bg-orange-50 text-orange-600' : 
-            'bg-green-50 text-green-700' // Veranderd van blue naar green varianten
+            'bg-green-50 text-green-700' 
         }` 
     }, 
         stats.ratio > 80 ? "⚠️ Je vaste lasten zijn erg hoog!" :
         stats.ratio > 50 ? "⚠️ Meer dan de helft van je loon gaat naar vaste lasten." :
-        "✅ Financiële balans: Je financiële balans ziet er gezond uit. Goed bezig!" // Tekst toegevoegd
+        "✅ Je financiële balans ziet er gezond uit. Goed bezig!" 
     )
 ),
                         stats.categoryData.length > 0 && e('div', { className: "mt-8 space-y-4" },
@@ -787,5 +802,3 @@ e('header', { className: "px-5 pt-6 pb-8 card-rounded-lg transition-all duration
     </script>
 </body>
 </html>
-
-
