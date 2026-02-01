@@ -710,7 +710,7 @@ e('header', { className: "px-5 pt-6 pb-8 card-rounded-lg transition-all duration
                     ),
                     e('button', { onClick: () => handleTabChange('insights'), className: `flex-1 flex flex-col items-center gap-1 transition-all ${activeTab === 'insights' ? 'text-blue-600' : 'text-slate-300'}` },
                         e(Icon, { name: 'pie-chart', size: 24, fill: activeTab === 'insights' ? 'currentColor' : 'none' }),
-                        e('span', { className: "text-[11px] font-extabold uppercase" }, "Inzicht")
+                        e('span', { className: "text-[11px] font-extrabold uppercase" }, "Inzicht")
                     ),
                     e('button', { onClick: () => handleTabChange('savings'), className: `flex-1 flex flex-col items-center gap-1 transition-all ${activeTab === 'savings' ? 'text-blue-600' : 'text-slate-300'}` },
                         e(Icon, { name: 'trending-down', size: 24, fill: activeTab === 'savings' ? 'currentColor' : 'none' }),
