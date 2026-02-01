@@ -2,8 +2,8 @@
   "short_name": "Contractly",
   "name": "Contractly - Mijn contracten",
   "description": "Al je vaste kosten in één handig overzicht",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
@@ -24,3 +24,4 @@
     }
   ]
 }
+
