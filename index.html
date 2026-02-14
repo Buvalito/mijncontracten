@@ -201,7 +201,7 @@
 
             // Spaardoelen state
             const [savingGoalAmount, setSavingGoalAmount] = useState(() => localStorage.getItem('pwa_goal_amount') || '');
-            const [savingGoalMonths, setSavingGoalMonths] = useState(() => localStorage.getItem('pwa_goal_months') || '12');
+            const [savingGoalMonths, setSavingGoalMonths] = useState(() => localStorage.getItem('pwa_goal_months') || '');
 
             const [contracts, setContracts] = useState(() => {
                 const saved = localStorage.getItem('pwa_contracts_v5');
@@ -1139,4 +1139,5 @@
     </script>
 </body>
 </html>
+
 
