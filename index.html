@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Contractly - Al je vaste kosten in één helder overzicht</title>
+    <title>Monly - Al je maandelijkse uitgaven in één helder overzicht</title>
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Contractly">
+    <meta name="apple-mobile-web-app-title" content="Monly">
     <link rel="apple-touch-icon" href="./Logo.png">
     <link rel="icon" type="image/x-icon" href="./Logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -96,7 +96,7 @@
             border-top: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-around;
-            padding: 12px 0 28px 0;
+            padding: 12px 0 24px 0;
             z-index: 40;
         }
 
@@ -221,8 +221,8 @@
             });
 
             const benchmarks = {
-                single: { Housing: 850, Utilities: 180, Insurance: 120, Subscription: 75, Investment: 100 },
-                couple: { Housing: 650, Utilities: 120, Insurance: 100, Subscription: 55, Investment: 150 }
+                single: { Housing: 850, Utilities: 150, Insurance: 120, Subscription: 75, Investment: 0 },
+                couple: { Housing: 650, Utilities: 120, Insurance: 100, Subscription: 55, Investment: 0 }
             };
 
             useEffect(() => {
@@ -394,7 +394,7 @@
                     e('div', { className: "sticky-nav-white" },
                         e('div', { className: "flex items-center justify-between w-full" }, 
                             e('div', { className: "flex items-center" },
-                                e('span', { className: "text-lg font-semibold tracking-tight text-slate-900" }, "Contractly")
+                                e('span', { className: "text-lg font-semibold tracking-tight text-slate-900" }, "Monly")
                             ),
                             e('div', { className: "flex items-center gap-3" },
                                 e('div', { className: "text-right leading-none" },
@@ -424,7 +424,7 @@
                     e('div', { className: "max-w-md mx-auto" },
                         e('div', { className: "flex items-center justify-between mb-6" }, 
                             e('div', { className: "flex items-center" },
-                                e('span', { className: "text-lg font-semibold tracking-tight text-slate-900" }, "Contractly")
+                                e('span', { className: "text-lg font-semibold tracking-tight text-slate-900" }, "Monly")
                             ),
                             e('div', { className: "flex items-center gap-3" },
                                 e('div', { className: "text-right leading-none" },
@@ -514,7 +514,7 @@
                         ),
                         contracts.length === 0 && e('div', { className: "text-center py-12 px-8 border-1 border-dashed border-slate-200 rounded-[12px]" },
                             e('p', { className: "text-slate-400 text-sm mb-4 normal-case" }, "Je hebt nog geen uitgaven toegevoegd."),
-                            e('button', { onClick: openAddModal, className: "bg-blue-600 text-white px-5 py-3 rounded-full text-base font-bold" }, "Eerste item toevoegen")
+                            e('button', { onClick: openAddModal, className: "bg-blue-600 text-white px-5 py-3 rounded-full text-base font-bold" }, "Eerste uitgave toevoegen")
                         )
                     )
                 ),
@@ -545,14 +545,28 @@
                                     e('label', { className: "label-small text-slate-400 ml-2 mb-2 block" }, "Boodschappen"),
                                     e('div', { className: "flex items-center gap-2 bg-slate-50 p-4 rounded-xl" },
                                         e('span', { className: "text-lg font-bold text-slate-300" }, "€"),
-                                        e('input', { type: 'number', className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", value: groceries, onChange: ev => setGroceries(ev.target.value), placeholder: "0" })
+                                        e('input', { 
+                                            type: 'text', 
+                                            inputMode: 'numeric',
+                                            className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", 
+                                            value: formatNumber(groceries), 
+                                            onChange: ev => setGroceries(ev.target.value.replace(/\./g, '')), 
+                                            placeholder: "0" 
+                                        })
                                     )
                                 ),
                                 e('div', null,
                                     e('label', { className: "label-small text-slate-400 ml-2 mb-2 block" }, "Vrije tijd"),
                                     e('div', { className: "flex items-center gap-2 bg-slate-50 p-4 rounded-xl" },
                                         e('span', { className: "text-lg font-bold text-slate-300" }, "€"),
-                                        e('input', { type: 'number', className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", value: leisure, onChange: ev => setLeisure(ev.target.value), placeholder: "0" })
+                                        e('input', { 
+                                            type: 'text', 
+                                            inputMode: 'numeric',
+                                            className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", 
+                                            value: formatNumber(leisure), 
+                                            onChange: ev => setLeisure(ev.target.value.replace(/\./g, '')), 
+                                            placeholder: "0" 
+                                        })
                                     )
                                 )
                             )
@@ -626,9 +640,27 @@
                                         e('div', { className: "h-full bg-yellow-500 transition-all duration-1000", style: { width: `${Math.max(0, 100 - needsPct - wantsPct)}%` } })
                                     ),
                                     e('div', { className: "grid grid-cols-3 gap-2" },
-                                        e('div', null, e('p', { className: "text-[10px] font-bold text-blue-600 uppercase" }, "Behoeften"), e('p', { className: "text-sm font-black" }, needsPct.toFixed(0) + "%")),
-                                        e('div', null, e('p', { className: "text-[10px] font-bold text-emerald-500 uppercase" }, "Wensen"), e('p', { className: "text-sm font-black" }, wantsPct.toFixed(0) + "%")),
-                                        e('div', null, e('p', { className: "text-[10px] font-bold text-yellow-500 uppercase" }, "Sparen"), e('p', { className: "text-sm font-black" }, savingsPct.toFixed(0) + "%"))
+                                        e('div', null, 
+                                            e('p', { className: "text-[11px] font-bold text-blue-600 uppercase" }, "Behoeften"), 
+                                            e('p', { className: "text-sm font-black" }, 
+                                                needsPct.toFixed(0) + "%", 
+                                                e('span', { className: "text-slate-400 font-medium text-[10px] ml-1" }, "/ 50%")
+                                            )
+                                        ),
+                                        e('div', null, 
+                                            e('p', { className: "text-[11px] font-bold text-emerald-500 uppercase" }, "Wensen"), 
+                                            e('p', { className: "text-sm font-black" }, 
+                                                wantsPct.toFixed(0) + "%", 
+                                                e('span', { className: "text-slate-400 font-medium text-[10px] ml-1" }, "/ 30%")
+                                            )
+                                        ),
+                                        e('div', null, 
+                                            e('p', { className: "text-[11px] font-bold text-yellow-500 uppercase" }, "Sparen"), 
+                                            e('p', { className: "text-sm font-black" }, 
+                                                savingsPct.toFixed(0) + "%", 
+                                                e('span', { className: "text-slate-400 font-medium text-[10px] ml-1" }, "/ 20%")
+                                            )
+                                        )
                                     ),
                                     e('div', { className: "space-y-2" },
                                         needsPct > 55 && e('div', { className: "bg-orange-50 border border-orange-100 p-3 rounded-xl flex gap-2 items-center" }, 
@@ -679,7 +711,7 @@
                                 { label: 'Energie & Water', key: 'Utilities', color: 'bg-orange-400' },
                                 { label: 'Verzekeringen', key: 'Insurance', color: 'bg-red-500' },
                                 { label: 'Abonnementen', key: 'Subscription', color: 'bg-emerald-500' },
-                                { label: 'Beleggingen', key: 'Investment', color: 'bg-yellow-200' }
+                                { label: 'Beleggingen', key: 'Investment', color: 'bg-yellow-300' }
                             ].map(item => {
                                 const avg = item.key === 'Investment' 
                                     ? (parseFloat(income) * 0.10 || 100)
@@ -750,7 +782,7 @@
                             ),
                             e('div', { className: "w-full h-2 bg-slate-100 rounded-full overflow-hidden flex" },
                                 e('div', { 
-                                    className: "h-full bg-blue-600 transition-all duration-300",
+                                    className: "h-full bg-yellow-300 transition-all duration-300",
                                     style: { width: `${(investMonthly / Math.max(1, stats.remaining)) * 100}%` }
                                 }),
                                 e('div', { 
@@ -830,20 +862,23 @@
                         )
                     ),
                     e('section', { className: "space-y-3 pt-4" },
-                        e('h4', { className: "text-xl font-bold text-slate-900 ml-1 mb-3 text-left" }, "Beleggingstools"),
-                        [
-                            { title: "Curvo", desc: "De Belgische app voor passief beleggen in indexfondsen. Ideaal voor wie automatisch wil beleggen zonder zorgen.", link: "https://curvo.eu/nl-be", recommended: true },
-                            { title: "Saxo", desc: "Een betrouwbaar platform voor de actieve en passieve belegger met een zeer ruim aanbod aan aandelen, obligaties en ETF's.", link: "https://www.home.saxo/nl-be/products/autoinvest" },
-                            { title: "Re=Bel (Belfius)", desc: "Beleggen met een missie. Toegankelijk platform direct in je Belfius app met focus op duurzaamheid.", link: "https://www.belfius.be/retail/nl/producten/sparen-beleggen/rebel/index.aspx" },
-                            { title: "MeDirect", desc: "De specialist in sparen en beleggen met scherpe tarieven en een ruim aanbod aan fondsen en trackers.", link: "https://www.medirect.be/nl-be/investeer-zelf/etfs/search/" },
-                            { title: "Bolero (KBC)", desc: "Het beleggingsplatform van KBC. Zeer betrouwbaar, gebruiksvriendelijk en met sterke analyses.", link: "https://www.bolero.be/" }
-                        ].map((tool, i) => e('div', { key: i, className: "bg-white p-5 rounded-[12px] border border-slate-100 flex flex-col gap-3 text-left relative" },
-                            tool.recommended && e('div', { className: "absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase" }, "Aanrader"),
-                            e('p', { className: "text-[16px] font-bold text-slate-900" }, tool.title),
-                            e('p', { className: "text-base text-slate-400 leading-relaxed font-medium" }, tool.desc),
-                            e('a', { href: tool.link, target: "_blank", className: "text-blue-600 font-bold flex items-center gap-1 text-sm" }, "Website bezoeken", e(Icon, { name: 'external-link', size: 14 }))
-                        ))
-                    )
+    e('h4', { className: "text-xl font-bold text-slate-900 ml-1 mb-3 text-left" }, "Beleggingstools"),
+    [
+        { title: "Curvo", desc: "De Belgische app voor passief beleggen in indexfondsen. Ideaal voor wie automatisch wil beleggen zonder zorgen.", link: "https://curvo.eu/nl-be", recommended: true, borderColor: "border-green-100" }, // Flashy groen
+        { title: "Saxo", desc: "Een betrouwbaar platform voor de actieve en passieve belegger met een zeer ruim aanbod aan aandelen en ETF's.", link: "https://www.home.saxo/nl-be/products/autoinvest", borderColor: "border-blue-100" }, // Saxo blauw
+        { title: "MeDirect", desc: "De specialist in sparen en beleggen met scherpe tarieven en een ruim aanbod aan fondsen en trackers.", link: "https://www.medirect.be/nl-be/investeer-zelf/etfs/search/", borderColor: "border-emerald-100" }, // MeDirect donkergroen
+        { title: "Re=Bel", desc: "Beleggen met een missie. Toegankelijk platform direct in je Belfius app met focus op duurzaamheid.", link: "https://www.belfius.be/retail/nl/producten/sparen-beleggen/rebel/index.aspx", borderColor: "border-red-100" }, // Re=Bel rood
+        { title: "Bolero", desc: "Het beleggingsplatform van KBC. Zeer betrouwbaar, gebruiksvriendelijk en met sterke analyses.", link: "https://www.bolero.be/", borderColor: "border-purple-00" } // Bolero paars
+    ].map((tool, i) => e('div', { 
+        key: i, 
+        className: `bg-white p-5 rounded-[12px] border ${tool.borderColor} flex flex-col gap-3 text-left relative` 
+    },
+        tool.recommended && e('div', { className: "absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase" }, "Aanrader"),
+        e('p', { className: "text-[16px] font-bold text-slate-900" }, tool.title),
+        e('p', { className: "text-base text-slate-400 leading-relaxed font-medium" }, tool.desc),
+        e('a', { href: tool.link, target: "_blank", className: "text-blue-600 font-bold flex items-center gap-1 text-sm" }, "Website bezoeken", e(Icon, { name: 'external-link', size: 14 }))
+    ))
+)
                 ),
 
                 activeTab === 'savings' && e('main', { className: "max-w-md mx-auto px-5 -mt-4 animate-sheet space-y-4" },
@@ -858,27 +893,29 @@
                             ),
                             e('div', { className: "space-y-4" },
                                 e('div', null,
-                                    e('label', { className: "label-small text-slate-400 ml-1 mb-2 block" }, "Ik wil sparen voor (€)"),
+                                    e('label', { className: "label-small text-slate-400 ml-1 mb-2 block" }, "Doelbedrag"),
                                     e('div', { className: "flex items-center gap-2 bg-slate-50 p-3 rounded-xl" },
                                         e('span', { className: "text-lg font-bold text-slate-300" }, "€"),
                                         e('input', { 
-                                            type: 'number', 
+                                            type: 'text',
+                                            inputMode: 'numeric',
                                             className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", 
-                                            value: savingGoalAmount, 
-                                            onChange: ev => setSavingGoalAmount(ev.target.value), 
+                                            value: formatNumber(savingGoalAmount), 
+                                            onChange: ev => setSavingGoalAmount(ev.target.value.replace(/\./g, '')), 
                                             placeholder: "5.000" 
                                         })
                                     )
                                 ),
                                 e('div', null,
-                                    e('label', { className: "label-small text-slate-400 ml-1 mb-2 block" }, "Binnen hoeveel maanden?"),
+                                    e('label', { className: "label-small text-slate-400 ml-1 mb-2 block" }, "Termijn (maanden)"),
                                     e('div', { className: "flex items-center gap-2 bg-slate-50 p-3 rounded-xl" },
                                         e(Icon, { name: 'calendar', size: 16, className: "text-slate-300" }),
                                         e('input', { 
-                                            type: 'number', 
+                                            type: 'text', 
+                                            inputMode: 'numeric',
                                             className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", 
-                                            value: savingGoalMonths, 
-                                            onChange: ev => setSavingGoalMonths(ev.target.value), 
+                                            value: formatNumber(savingGoalMonths), 
+                                            onChange: ev => setSavingGoalMonths(ev.target.value.replace(/\./g, '')), 
                                             placeholder: "12" 
                                         })
                                     )
@@ -890,10 +927,10 @@
                                     ),
                                     e('button', { 
                                         onClick: () => handleTabChange('wealth'),
-                                        className: "w-full bg-white border border-blue-200 text-blue-600 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                        className: "w-full bg-blue-600 text-white py-3 rounded-full font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-blue-700"
                                     }, 
                                         e(Icon, { name: 'trending-up', size: 14 }),
-                                        "Dit sneller bereiken via beleggen?"
+                                        "Sneller bereiken met beleggen?"
                                     )
                                 )
                             )
@@ -969,7 +1006,7 @@
                             },
                             { 
                                 title: "Verzekeringen", 
-                                desc: "Scan op dubbele polissen en vergelijk prijzen. Heb je pechverhandling via je bank én verzekering? Schrap de dubbels en bespaar direct.",
+                                desc: "Scan op dubbele polissen en vergelijk prijzen. Heb je pechverhelping via je bank én verzekering? Schrap de dubbels en bespaar direct.",
                                 icon: "shield-check",
                                 color: "text-red-600",
                                 bg: "bg-red-50"
