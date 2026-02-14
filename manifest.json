@@ -1,7 +1,7 @@
 {
-  "short_name": "Contractly",
-  "name": "Contractly - Mijn contracten",
-  "description": "Al je vaste kosten in één handig overzicht",
+  "short_name": "Monly",
+  "name": "Monly - Mijn maandelijkse uitgaven",
+  "description": "Al je maandelijkse uitgaven en meer in één handig overzicht",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -24,6 +24,7 @@
     }
   ]
 }
+
 
 
 
