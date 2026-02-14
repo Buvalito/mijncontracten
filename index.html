@@ -199,6 +199,10 @@
             const [investYears, setInvestYears] = useState(10);
             const [investReturn, setInvestReturn] = useState(7);
 
+            // Spaardoelen state
+            const [savingGoalAmount, setSavingGoalAmount] = useState(() => localStorage.getItem('pwa_goal_amount') || '');
+            const [savingGoalMonths, setSavingGoalMonths] = useState(() => localStorage.getItem('pwa_goal_months') || '12');
+
             const [contracts, setContracts] = useState(() => {
                 const saved = localStorage.getItem('pwa_contracts_v5');
                 return saved ? JSON.parse(saved) : [];
@@ -237,7 +241,6 @@
                 return num.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
             };
 
-            // Verbeterde helper functie voor de gevraagde euro formatting
             const formatEuro = (amount) => {
                 if (amount === undefined || amount === null) return '0';
                 const value = Number(amount);
@@ -285,6 +288,8 @@
             useEffect(() => { localStorage.setItem('pwa_household', householdType); }, [householdType]);
             useEffect(() => { localStorage.setItem('pwa_groceries', groceries); }, [groceries]);
             useEffect(() => { localStorage.setItem('pwa_leisure', leisure); }, [leisure]);
+            useEffect(() => { localStorage.setItem('pwa_goal_amount', savingGoalAmount); }, [savingGoalAmount]);
+            useEffect(() => { localStorage.setItem('pwa_goal_months', savingGoalMonths); }, [savingGoalMonths]);
 
             const getMonthlyCost = (c) => {
                 let cost = parseFloat(c.cost || 0);
@@ -394,7 +399,7 @@
                             e('div', { className: "flex items-center gap-3" },
                                 e('div', { className: "text-right leading-none" },
                                     e('h1', { className: "text-slate-400 text-[14px] font-semibold uppercase tracking-wider" }, 
-                                        activeTab === 'list' ? "Uitgaven" : activeTab === 'insights' ? "Inzicht" : activeTab === 'wealth' ? "Vermogen" : "Besparen"
+                                        activeTab === 'list' ? "Uitgaven" : activeTab === 'insights' ? "Inzicht" : activeTab === 'wealth' ? "Investeren" : "Besparen"
                                     )
                                 ),
                                 e('button', { onClick: openAddModal, className: "w-8 h-8 flex items-center justify-center bg-blue-600 text-white rounded-full transition-transform active:scale-90" }, 
@@ -424,7 +429,7 @@
                             e('div', { className: "flex items-center gap-3" },
                                 e('div', { className: "text-right leading-none" },
                                     e('h1', { className: "text-slate-400 text-[14px] font-bold uppercase tracking-wider" }, 
-                                        activeTab === 'list' ? "Uitgaven" : activeTab === 'insights' ? "Inzicht" : activeTab === 'wealth' ? "Vermogen" : "Besparen"
+                                        activeTab === 'list' ? "Uitgaven" : activeTab === 'insights' ? "Inzicht" : activeTab === 'wealth' ? "Investeren" : "Besparen"
                                     )
                                 ),
                                 e('button', { onClick: openAddModal, className: "w-8 h-8 flex items-center justify-center bg-blue-600 text-white rounded-full transition-transform active:scale-90" }, 
@@ -518,7 +523,7 @@
                     e('section', { className: "bg-white p-6 rounded-[12px] border border-slate-100 space-y-8 text-left" },
                         e('div', null,
                             e('h3', { className: "text-xl font-bold text-slate-900 mb-3" }, "Mijn inzicht"),
-                            e('p', { className: "text-base text-slate-400 leading-relaxed" }, "Vul hier je maandelijks netto-inkomen en geschatte variabele kosten in. Zo zie je welk deel van je loon naar lasten gaat en hoeveel je per maand overhoudt.")
+                            e('p', { className: "text-base text-slate-400 leading-relaxed" }, "Vul hier je maandelijks netto-inkomen en geschatte variabele kosten in. Zo zie je welk deel van je loon naar uitgaven gaan en hoeveel je per maand overhoudt.")
                         ),
                         e('div', { className: "space-y-4" },
                             e('div', null,
@@ -555,7 +560,7 @@
                         income > 0 && e('div', { className: "pt-4 border-t border-slate-50" },
                             e('div', { className: "flex justify-between items-end mb-4" },
                                 e('div', null,
-                                    e('p', { className: "label-small text-slate-400" }, "Totale lasten"),
+                                    e('p', { className: "label-small text-slate-400" }, "Totale uitgaven"),
                                     e('p', { className: "text-2xl font-bold text-slate-900" }, `${stats.ratio.toFixed(1)}%`)
                                 ),
                                 e('div', { className: "text-right" },
@@ -676,7 +681,6 @@
                                 { label: 'Abonnementen', key: 'Subscription', color: 'bg-emerald-500' },
                                 { label: 'Beleggingen', key: 'Investment', color: 'bg-yellow-200' }
                             ].map(item => {
-                                // Dynamische benchmark voor beleggingen (10% van loon)
                                 const avg = item.key === 'Investment' 
                                     ? (parseFloat(income) * 0.10 || 100)
                                     : benchmarks[householdType][item.key];
@@ -734,8 +738,8 @@
                 activeTab === 'wealth' && e('main', { className: "max-w-md mx-auto px-5 -mt-4 animate-sheet space-y-4" },
                     e('section', { className: "bg-white p-6 rounded-[12px] border border-slate-100 space-y-6 text-left" },
                         e('div', null,
-                            e('h3', { className: "text-xl font-bold text-slate-900 mb-2" }, "Mijn vermogen"),
-                            e('p', { className: "text-base text-slate-400 leading-relaxed pb-2" }, "Kijk wat je kunt opbouwen door je overschot slim maandelijks te investeren.")
+                            e('h3', { className: "text-xl font-bold text-slate-900 mb-2" }, "Investeer in je toekomst"),
+                            e('p', { className: "text-base text-slate-400 leading-relaxed pb-2" }, "Heb je je spaardoelen bereikt? Kijk dan eens wat je kunt opbouwen door je overschot slim maandelijks te investeren.")
                         ),
                         e('div', { className: "" },
                             e('div', { className: "flex justify-between items-end mb-2" },
@@ -809,7 +813,7 @@
                                     e('span', { className: "text-[10px] text-slate-300 font-bold" }, "0%"),
                                     e('span', { className: "text-[10px] text-slate-300 font-bold" }, "15%")
                                 ),
-                                e('p', { className: "text-[10px] text-slate-400 mt-4 leading-tight italic" }, 
+                                e('p', { className: "text-[11px] text-slate-400 mt-4 leading-tight italic" }, 
                                     "Het gemiddelde rendement van een gespreide ETF-portefeuille bedraagt historisch ongeveer 7% per jaar. Let op: resultaten uit het verleden bieden geen garantie voor de toekomst. Beleggen brengt risico's met zich mee."
                                 )
                             )
@@ -845,8 +849,57 @@
                 activeTab === 'savings' && e('main', { className: "max-w-md mx-auto px-5 -mt-4 animate-sheet space-y-4" },
                     e('section', { className: "bg-white p-6 rounded-[12px] border border-slate-100 text-left" },
                         e('h3', { className: "text-xl font-bold text-slate-900 mb-3" }, "Slim besparen"),
-                        e('p', { className: "text-base text-slate-400 leading-relaxed" }, "Gebruik deze onafhankelijke tools om te controleren of je nog steeds de beste prijs betaalt. Bekijk, vergelijk en stap over in 1-2-3.")
+                        e('p', { className: "text-base text-slate-400 leading-relaxed mb-8" }, "Bepaal je spaardoel en gebruik onderstaande onafhankelijke tools  om te controleren of je nog steeds de beste prijs betaalt. Bekijk, vergelijk en stap over in 1-2-3."),
+                        
+                        e('div', { className: "pt-6 border-t border-slate-50" },
+                            e('div', { className: "flex items-center gap-2 mb-4" },
+                                e(Icon, { name: 'target', size: 18, className: "text-blue-600" }),
+                                e('h4', { className: "text-[16px] font-bold text-slate-900" }, "Spaardoel instellen")
+                            ),
+                            e('div', { className: "space-y-4" },
+                                e('div', null,
+                                    e('label', { className: "label-small text-slate-400 ml-1 mb-2 block" }, "Ik wil sparen voor (€)"),
+                                    e('div', { className: "flex items-center gap-2 bg-slate-50 p-3 rounded-xl" },
+                                        e('span', { className: "text-lg font-bold text-slate-300" }, "€"),
+                                        e('input', { 
+                                            type: 'number', 
+                                            className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", 
+                                            value: savingGoalAmount, 
+                                            onChange: ev => setSavingGoalAmount(ev.target.value), 
+                                            placeholder: "5.000" 
+                                        })
+                                    )
+                                ),
+                                e('div', null,
+                                    e('label', { className: "label-small text-slate-400 ml-1 mb-2 block" }, "Binnen hoeveel maanden?"),
+                                    e('div', { className: "flex items-center gap-2 bg-slate-50 p-3 rounded-xl" },
+                                        e(Icon, { name: 'calendar', size: 16, className: "text-slate-300" }),
+                                        e('input', { 
+                                            type: 'number', 
+                                            className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", 
+                                            value: savingGoalMonths, 
+                                            onChange: ev => setSavingGoalMonths(ev.target.value), 
+                                            placeholder: "12" 
+                                        })
+                                    )
+                                ),
+                                savingGoalAmount > 0 && savingGoalMonths > 0 && e('div', { className: "mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100" },
+                                    e('div', { className: "flex justify-between items-center mb-3" },
+                                        e('p', { className: "text-sm font-bold text-slate-600" }, "Nodig per maand:"),
+                                        e('p', { className: "text-xl font-black text-blue-600" }, `€${formatEuro(parseFloat(savingGoalAmount) / parseInt(savingGoalMonths))}`)
+                                    ),
+                                    e('button', { 
+                                        onClick: () => handleTabChange('wealth'),
+                                        className: "w-full bg-white border border-blue-200 text-blue-600 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
+                                    }, 
+                                        e(Icon, { name: 'trending-up', size: 14 }),
+                                        "Dit sneller bereiken via beleggen?"
+                                    )
+                                )
+                            )
+                        )
                     ),
+
                     e('div', { className: "space-y-3" },
                         [
                             { 
@@ -970,13 +1023,13 @@
                         e(Icon, { name: 'pie-chart', size: 24, fill: activeTab === 'insights' ? 'currentColor' : 'none' }),
                         e('span', { className: "text-[11px] font-extrabold uppercase" }, "Inzicht")
                     ),
-                    e('button', { onClick: () => handleTabChange('wealth'), className: `flex-1 flex flex-col items-center gap-1 transition-all ${activeTab === 'wealth' ? 'text-blue-600' : 'text-slate-300'}` },
-                        e(Icon, { name: 'trending-up', size: 24, fill: activeTab === 'wealth' ? 'currentColor' : 'none' }),
-                        e('span', { className: "text-[11px] font-extrabold uppercase" }, "Vermogen")
-                    ),
                     e('button', { onClick: () => handleTabChange('savings'), className: `flex-1 flex flex-col items-center gap-1 transition-all ${activeTab === 'savings' ? 'text-blue-600' : 'text-slate-300'}` },
                         e(Icon, { name: 'piggy-bank', size: 24, fill: activeTab === 'savings' ? 'currentColor' : 'none' }),
                         e('span', { className: "text-[11px] font-extrabold uppercase" }, "Besparen")
+                    ),
+                    e('button', { onClick: () => handleTabChange('wealth'), className: `flex-1 flex flex-col items-center gap-1 transition-all ${activeTab === 'wealth' ? 'text-blue-600' : 'text-slate-300'}` },
+                        e(Icon, { name: 'trending-up', size: 24, fill: activeTab === 'wealth' ? 'currentColor' : 'none' }),
+                        e('span', { className: "text-[11px] font-extrabold uppercase" }, "Investeren")
                     )
                 ),
 
@@ -1049,4 +1102,3 @@
     </script>
 </body>
 </html>
-
