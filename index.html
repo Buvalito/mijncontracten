@@ -541,7 +541,7 @@
                 activeTab === 'insights' && e('main', { className: "max-w-md mx-auto px-5 -mt-4 animate-sheet space-y-4" },
                     e('section', { className: "bg-white p-6 rounded-[12px] border border-slate-100 space-y-8 text-left" },
                         e('div', null,
-                            e('h3', { className: "text-xl font-bold text-slate-900 mb-3" }, "Mijn inzicht"),
+                            e('h3', { className: "text-xl font-bold text-slate-900 mb-3" }, "Inzicht in je uitgaven"),
                             e('p', { className: "text-base text-slate-400 leading-relaxed" }, "Vul hier je maandelijks netto-inkomen en geschatte variabele kosten in. Zo zie je welk deel van je loon naar uitgaven gaat en hoeveel je per maand overhoudt.")
                         ),
                         e('div', { className: "space-y-4" },
@@ -709,8 +709,8 @@
                             e('h4', { className: "text-xl font-bold mb-3 text-slate-900" }, "Mijn uitgaven in beeld"),
                             e('p', { className: "text-base text-slate-400 leading-relaxed mb-6" }, 
                                 householdType === 'single' 
-                                ? e('span', null, "We vergelijken jouw budgettering met dat van een gemiddelde ", e('span', null, "alleenstaande"), " Vlaming.") 
-                                : e('span', null, "We vergelijken jouw budgettering met de gemiddelde individuele last van een ", e('span', null, "samenwonende"), " Vlaming.")
+                                ? e('span', null, "Vergelijk jouw budgettering met dat van een gemiddelde ", e('span', null, "alleenstaande"), " Vlaming.") 
+                                : e('span', null, "Vergelijk jouw budgettering met de gemiddelde individuele uitgaven van een ", e('span', null, "samenwonende"), " Vlaming.")
                             ),
                             e('label', { className: "label-small text-slate-400 ml-1 mb-2 block" }, "Mijn huishouden"),
                             e('div', { className: "flex bg-slate-100 p-1 rounded-xl mb-6" },
@@ -865,7 +865,7 @@
                                     e('span', { className: "text-[10px] text-slate-300 font-bold" }, "15%")
                                 ),
                                 e('p', { className: "text-[11px] text-slate-400 mt-4 leading-tight italic" }, 
-                                    "Het gemiddelde rendement van een gespreide ETF-portefeuille bedraagt historisch ongeveer 7% per jaar. Let op: resultaten uit het verleden bieden geen garantie voor de toekomst. Beleggen brengt risico's met zich mee."
+                                    "Het gemiddelde rendement van een wereldwijd gespreide ETF-portefeuille bedraagt historisch ongeveer 7% per jaar. Let op: resultaten uit het verleden bieden geen garantie voor de toekomst. Beleggen brengt risico's met zich mee."
                                 )
                             )
                         ),
@@ -902,7 +902,7 @@
 
                 activeTab === 'savings' && e('main', { className: "max-w-md mx-auto px-5 -mt-4 animate-sheet space-y-4" },
                     e('section', { className: "bg-white p-6 rounded-[12px] border border-slate-100 text-left" },
-                        e('h3', { className: "text-xl font-bold text-slate-900 mb-3" }, "Slim besparen"),
+                        e('h3', { className: "text-xl font-bold text-slate-900 mb-3" }, "Slim sparen en besparen"),
                         e('p', { className: "text-base text-slate-400 leading-relaxed mb-8" }, "Bepaal je spaardoel en gebruik onderstaande onafhankelijke tools  om te controleren of je nog steeds de beste prijs betaalt. Bekijk, vergelijk en stap over in 1-2-3."),
                         
                         e('div', { className: "pt-6 border-t border-slate-50" },
