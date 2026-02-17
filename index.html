@@ -152,10 +152,13 @@
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
 
+        /* Updated Slider CSS */
         input[type=range] {
             -webkit-appearance: none;
             width: 100%;
-            background: transparent;
+            height: 8px; /* Increased height to match progress bars (h-2 = 8px) */
+            border-radius: 99px;
+            background: transparent; /* Background handled by inline style */
         }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
@@ -164,15 +167,17 @@
             border-radius: 50%;
             background: #2563EB;
             cursor: pointer;
-            margin-top: -7px;
+            margin-top: -6px; /* (8px track - 20px thumb) / 2 = -6px to center */
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 2;
         }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
-            height: 5px;
+            height: 8px;
             cursor: pointer;
-            background: #E2E8F0;
-            border-radius: 2px;
+            background: transparent; /* Important for gradient to show */
+            border-radius: 99px;
         }
     </style>
 </head>
@@ -197,7 +202,7 @@
             
             const [investMonthly, setInvestMonthly] = useState(0);
             const [investYears, setInvestYears] = useState(10);
-            const [investReturn, setInvestReturn] = useState(7);
+            const [investReturn, setInvestReturn] = useState(7); // Fixed 7% default
 
             // Spaardoelen state
             const [savingGoalAmount, setSavingGoalAmount] = useState(() => localStorage.getItem('pwa_goal_amount') || '');
@@ -300,7 +305,6 @@
                 return cost;
             };
 
-            // Helper om het VOLLEDIGE bedrag te berekenen (zonder de split)
             const getFullMonthlyCost = (c) => {
                 let cost = parseFloat(c.cost || 0);
                 if (c.frequency === 'yearly') return cost / 12;
@@ -348,6 +352,14 @@
                 const futureValue = p * ((Math.pow(1 + r, n) - 1) / r);
                 return futureValue;
             }, [investMonthly, investYears, investReturn]);
+
+            // Helper to get gradient style for sliders
+            const getSliderStyle = (value, min, max) => {
+                const percentage = ((value - min) / (max - min)) * 100;
+                return {
+                    background: `linear-gradient(to right, #2563EB 0%, #2563EB ${percentage}%, #E2E8F0 ${percentage}%, #E2E8F0 100%)`
+                };
+            };
 
             const filteredContracts = useMemo(() => {
                 return contracts
@@ -515,23 +527,35 @@
                             e('h3', { className: "text-xs font-bold text-slate-400 uppercase tracking-wider" }, "Maandelijkse uitgaven"),
                             filteredContracts.length === 0 && contracts.length > 0 && e('span', { className: "text-[12px] text-slate-300 normal-case leading-none" }, "Geen items gevonden")
                         ),
-                        filteredContracts.map((contract) => 
-                            e('div', { key: contract.id, onClick: () => setSelectedContract(contract), className: "bg-white p-4 rounded-[12px] border border-slate-100 flex items-center gap-4 clickable" },
-                                e('div', { className: `w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${getIconColorClass(contract.type)}` }, e(Icon, { name: contract.type === 'Housing' ? 'home' : contract.type === 'Insurance' ? 'shield' : contract.type === 'Utilities' ? 'zap' : contract.type === 'Investment' ? 'trending-up' : 'credit-card' })),
-                                e('div', { className: "flex-1 min-w-0" },
-                                    e('h4', { className: "font-bold text-base text-slate-900 truncate" }, contract.name),
-                                    e('div', { className: "flex items-center gap-1" },
-                                        contract.isShared && e(Icon, { name: 'users', size: 10, className: "text-blue-600" }),
-                                        e('p', { className: "label-small text-slate-400" }, contract.provider || getTypeLabel(contract.type))
-                                    )
-                                ),
-                                e('div', { className: "text-right shrink-0" },
-                                    e('p', { className: "font-extrabold text-[15px] text-slate-900" }, `€ ${formatEuro(getMonthlyCost(contract))}`),
-                                    e('p', { className: "text-[9px] text-slate-400 font-bold uppercase" }, "per maand")
-                                ),
-                                e(Icon, { name: 'chevron-right', size: 16, className: "text-slate-300" })
+                        
+                        // NEW DESIGN: Grouped List Container
+                        filteredContracts.length > 0 && e('div', { className: "bg-white rounded-xl border border-slate-100 overflow-hidden" },
+                            filteredContracts.map((contract, index) => 
+                                e('div', { 
+                                    key: contract.id, 
+                                    onClick: () => setSelectedContract(contract), 
+                                    className: `p-4 flex items-center gap-4 clickable hover:bg-slate-50 transition-colors ${index !== filteredContracts.length - 1 ? 'border-b border-slate-50' : ''}` 
+                                },
+                                    // Smaller, rounder icon container
+                                    e('div', { className: `w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${getIconColorClass(contract.type)}` }, 
+                                        e(Icon, { name: contract.type === 'Housing' ? 'home' : contract.type === 'Insurance' ? 'shield' : contract.type === 'Utilities' ? 'zap' : contract.type === 'Investment' ? 'trending-up' : 'credit-card', size: 18 })
+                                    ),
+                                    e('div', { className: "flex-1 min-w-0" },
+                                        e('h4', { className: "font-bold text-[15px] text-slate-900 truncate" }, contract.name),
+                                        e('div', { className: "flex items-center gap-1" },
+                                            contract.isShared && e(Icon, { name: 'users', size: 10, className: "text-blue-600" }),
+                                            e('p', { className: "text-[11px] font-medium text-slate-400" }, contract.provider || getTypeLabel(contract.type))
+                                        )
+                                    ),
+                                    e('div', { className: "text-right shrink-0" },
+                                        e('p', { className: "font-bold text-[15px] text-slate-900" }, `€ ${formatEuro(getMonthlyCost(contract))}`),
+                                        e('p', { className: "text-[9px] text-slate-400 font-bold uppercase" }, "per maand")
+                                    ),
+                                    e(Icon, { name: 'chevron-right', size: 14, className: "text-slate-300" })
+                                )
                             )
                         ),
+
                         contracts.length === 0 && e('div', { className: "text-center py-12 px-8 border-1 border-dashed border-slate-200 rounded-[12px]" },
                             e('p', { className: "text-slate-400 text-sm mb-4 normal-case" }, "Je hebt nog geen uitgaven toegevoegd."),
                             e('button', { onClick: openAddModal, className: "bg-blue-600 text-white px-5 py-3 rounded-full text-base font-bold" }, "Eerste uitgave toevoegen")
@@ -721,7 +745,7 @@
                                 ].map(h => e('button', { 
                                     key: h.id, 
                                     onClick: () => setHouseholdType(h.id),
-                                    className: `flex-1 py-4 rounded-xl label-small font-bold transition-all uppercase ${householdType === h.id ? 'bg-[#FFFFFF] text-blue-600 shadow-sm' : 'text-slate-500'}`
+                                    className: `flex-1 py-4 rounded-xl label-small font-bold transition-all uppercase ${householdType === h.id ? 'bg-[#FFFFFF] text-blue-600' : 'text-slate-500'}`
                                 }, h.label))
                             )
                         ),
@@ -794,13 +818,17 @@
                             e('p', { className: "text-base text-slate-400 leading-relaxed pb-2" }, "Heb je je spaardoelen bereikt? Kijk dan eens wat je kunt opbouwen door je overschot slim maandelijks te investeren.")
                         ),
                         e('div', { className: "" },
-                            e('div', { className: "flex justify-between items-end mb-2" },
+                            e('div', { className: "flex justify-between items-end mb-4" },
                                 e('div', null,
                                     e('p', { className: "label-small text-slate-400" }, "Overschot"),
                                     e('p', { className: "text-2xl font-bold text-slate-900" }, `€ ${formatEuro(Math.max(0, stats.remaining) - investMonthly)}`)
+                                ),
+                                e('div', { className: "text-right" },
+                                    e('p', { className: "label-small text-slate-400" }, "Totale eigen inleg"),
+                                    e('p', { className: "text-2xl font-bold text-slate-900" }, `€ ${formatEuro(investMonthly * investYears * 12)}`)
                                 )
                             ),
-                            e('div', { className: "w-full h-2 bg-slate-100 rounded-full overflow-hidden flex" },
+                            e('div', { className: "w-full h-4 bg-slate-100 rounded-full overflow-hidden flex mb-8" },
                                 e('div', { 
                                     className: "h-full bg-yellow-300 transition-all duration-300",
                                     style: { width: `${(investMonthly / Math.max(1, stats.remaining)) * 100}%` }
@@ -813,7 +841,7 @@
                         ),
                         e('div', { className: "space-y-8 pt-4" },
                             e('div', null,
-                                e('div', { className: "flex justify-between" },
+                                e('div', { className: "flex justify-between mb-2" },
                                     e('label', { className: "label-small text-slate-500" }, "Inleg per maand"),
                                     e('span', { className: "text-base font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg" }, `€ ${formatEuro(investMonthly)}`)
                                 ),
@@ -823,6 +851,7 @@
                                     max: Math.max(0, Math.floor(stats.remaining)) || 1000, 
                                     step: 10, 
                                     value: investMonthly, 
+                                    style: getSliderStyle(investMonthly, 0, Math.max(0, Math.floor(stats.remaining)) || 1000),
                                     onChange: ev => setInvestMonthly(parseInt(ev.target.value)) 
                                 }),
                                 e('div', { className: "flex justify-between mt-1" },
@@ -831,7 +860,7 @@
                                 )
                             ),
                             e('div', null,
-                                e('div', { className: "flex justify-between" },
+                                e('div', { className: "flex justify-between mb-2" },
                                     e('label', { className: "label-small text-slate-500" }, "Termijn"),
                                     e('span', { className: "text-base font-bold text-slate-700 bg-slate-50 px-3 py-1 rounded-lg" }, `${investYears} jaar`)
                                 ),
@@ -841,43 +870,24 @@
                                     max: 40, 
                                     step: 1, 
                                     value: investYears, 
+                                    style: getSliderStyle(investYears, 1, 40),
                                     onChange: ev => setInvestYears(parseInt(ev.target.value)) 
                                 }),
                                 e('div', { className: "flex justify-between mt-1" },
                                     e('span', { className: "text-[10px] text-slate-300 font-bold" }, "1 jaar"),
                                     e('span', { className: "text-[10px] text-slate-300 font-bold" }, "40 jaar")
                                 )
-                            ),
-                            e('div', null,
-                                e('div', { className: "flex justify-between" },
-                                    e('label', { className: "label-small text-slate-500" }, "Jaarlijks rendement"),
-                                    e('span', { className: "text-base font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg" }, `${investReturn}%`)
-                                ),
-                                e('input', { 
-                                    type: 'range', 
-                                    min: 0, 
-                                    max: 15, 
-                                    step: 0.5, 
-                                    value: investReturn, 
-                                    onChange: ev => setInvestReturn(parseFloat(ev.target.value)) 
-                                }),
-                                e('div', { className: "flex justify-between mt-1" },
-                                    e('span', { className: "text-[10px] text-slate-300 font-bold" }, "0%"),
-                                    e('span', { className: "text-[10px] text-slate-300 font-bold" }, "15%")
-                                ),
-                                e('p', { className: "text-[11px] text-slate-400 mt-4 leading-tight italic" }, 
-                                    "Het gemiddelde rendement van een wereldwijd gespreide ETF-portefeuille bedraagt historisch ongeveer 7% per jaar. Let op: resultaten uit het verleden bieden geen garantie voor de toekomst. Beleggen brengt risico's met zich mee."
-                                )
                             )
                         ),
-                        e('div', { className: "pt-6 border-t border-slate-100 flex items-center justify-between" },
-                            e('div', null,
-                                e('p', { className: "label-small text-slate-400 mb-1" }, "Geschat eindkapitaal"),
-                                e('h4', { className: "text-3xl font-black text-slate-900" }, `€ ${formatEuro(investmentResult)}`)
+                        e('div', { className: "pt-6 border-t border-slate-100 mt-6" },
+                            e('div', { className: "flex items-center justify-between mb-6" },
+                                e('div', null,
+                                    e('p', { className: "label-small text-slate-400 mb-1" }, "Geschat eindkapitaal"),
+                                    e('h4', { className: "text-3xl font-black text-slate-900" }, `€ ${formatEuro(investmentResult)}`)
+                                )
                             ),
-                            e('div', { className: "text-right" },
-                                e('p', { className: "text-[10px] text-slate-400 font-bold uppercase" }, "Eigen inleg"),
-                                e('p', { className: "text-sm font-bold text-slate-600" }, `€ ${formatEuro(investMonthly * investYears * 12)}`)
+                            e('p', { className: "text-[11px] text-slate-400 leading-tight italic" }, 
+                                "Het gemiddelde rendement van een wereldwijd gespreide ETF-portefeuille bedraagt historisch ongeveer 7% per jaar. Let op: resultaten uit het verleden bieden geen garantie voor de toekomst. Beleggen brengt risico's met zich mee."
                             )
                         )
                     ),
@@ -904,7 +914,7 @@
                 activeTab === 'savings' && e('main', { className: "max-w-md mx-auto px-5 -mt-4 animate-sheet space-y-4" },
                     e('section', { className: "bg-white p-6 rounded-[12px] border border-slate-100 text-left" },
                         e('h3', { className: "text-xl font-bold text-slate-900 mb-3" }, "Slim sparen en besparen"),
-                        e('p', { className: "text-base text-slate-400 leading-relaxed mb-8" }, "Bepaal je spaardoel en gebruik onderstaande onafhankelijke tools  om te controleren of je nog steeds de beste prijs betaalt. Bekijk, vergelijk en stap over in 1-2-3."),
+                        e('p', { className: "text-base text-slate-400 leading-relaxed mb-8" }, "Bepaal je spaardoel en gebruik onderstaande onafhankelijke tools om te controleren of je nog steeds de beste prijs betaalt. Bekijk, vergelijk en stap over in 1-2-3."),
                         
                         e('div', { className: "pt-6 border-t border-slate-50" },
                             e('div', { className: "flex items-center gap-2 mb-4" },
@@ -993,9 +1003,9 @@
                             },
                                 tip.isRecommended && e('div', { className: "absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase" }, "Aanrader"),
                                 e('div', { className: "flex items-center gap-3" },
-                                    e('div', { className: `${tip.bg} ${tip.color} p-2.5 rounded-xl shrink-0` }, 
-                                        e(Icon, { name: tip.icon, size: 20 })
-                                    ),
+                                    e('div', { className: `${tip.bg} ${tip.color} w-10 h-10 rounded-full flex items-center justify-center shrink-0` }, 
+                                    e(Icon, { name: tip.icon, size: 20 })
+                                ),
                                     e('p', { className: "text-[16px] font-bold text-slate-900" }, tip.title)
                                 ),
                                 e('p', { className: "text-base text-slate-400 leading-relaxed font-medium" }, tip.text),
@@ -1040,7 +1050,7 @@
                                 bg: "bg-emerald-50"
                             }
                         ].map((tip, i) => e('div', { key: i, className: "bg-white p-5 rounded-[12px] border border-slate-100 flex items-start gap-4 text-left" },
-                            e('div', { className: `${tip.bg} ${tip.color} p-2.5 rounded-xl shrink-0` }, e(Icon, { name: tip.icon, size: 20 })),
+                            e('div', { className: `${tip.bg} ${tip.color} w-10 h-10 rounded-full flex items-center justify-center shrink-0` }, e(Icon, { name: tip.icon, size: 20 })),
                             e('div', { className: "space-y-1" },
                                 e('p', { className: "text-[15px] font-bold text-slate-900" }, tip.title),
                                 e('p', { className: "text-base text-slate-400 leading-relaxed font-medium" }, tip.desc)
@@ -1158,12 +1168,26 @@
                         e('div', { className: "grid grid-cols-2 gap-4 mb-8" },
                             e('div', { className: "bg-slate-50 p-5 rounded-[12px] border border-slate-100" }, 
                                 e('p', { className: "label-small text-slate-400" }, selectedContract.isShared ? "Jouw aandeel" : "Totaal bedrag"), 
-                                e('p', { className: "text-xl font-extrabold text-blue-600" }, 
-                                    `€ ${formatEuro(getMonthlyCost(selectedContract))}`,
-                                    selectedContract.isShared && e('span', { className: "text-slate-400 font-medium text-xs ml-1" }, `/ € ${formatEuro(getFullMonthlyCost(selectedContract))}`)
+                                e('div', { className: "flex flex-wrap items-baseline gap-x-2 leading-tight" }, 
+                                    e('p', { className: "text-xl font-extrabold text-blue-600" }, 
+                                        `€\u00A0${formatEuro(getMonthlyCost(selectedContract))}`
+                                    ),
+                                    selectedContract.isShared && e('p', { 
+                                        className: "text-slate-400 font-medium text-xs whitespace-nowrap" 
+                                    }, `/ €\u00A0${formatEuro(getFullMonthlyCost(selectedContract))}`)
                                 )
                             ),
-                            e('div', { className: "bg-slate-50 p-5 rounded-[12px] border border-slate-100" }, e('p', { className: "label-small text-slate-400" }, "Frequentie"), e('p', { className: "text-base font-bold text-slate-700 normal-case leading-tight" }, getFrequencyLabel(selectedContract.frequency) + (selectedContract.isShared ? `, ${selectedContract.splitWith} personen` : '')))
+                            e('div', { className: "bg-slate-50 p-5 rounded-[12px] border border-slate-100" }, 
+                                e('p', { className: "label-small text-slate-400" }, "Frequentie"), 
+                                e('div', { className: "mt-1 flex flex-col items-start" },
+                                    e('p', { className: "text-base font-bold text-slate-700 normal-case leading-tight" }, 
+                                        getFrequencyLabel(selectedContract.frequency)
+                                    ),
+                                    selectedContract.isShared && e('p', { 
+                                        className: "text-slate-400 font-medium text-xs leading-tight mt-1 lowercase" 
+                                    }, `${selectedContract.splitWith} personen`)
+                                )
+                            )
                         ),
                         e('div', { className: "space-y-3" },
                             e('div', { className: "flex gap-3" },
