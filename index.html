@@ -179,6 +179,24 @@
             background: transparent; /* Important for gradient to show */
             border-radius: 99px;
         }
+
+        .cat-label-Housing      { color: #3b82f6; }
+        .cat-label-Insurance    { color: #ef4444; }
+        .cat-label-Subscription { color: #10b981; }
+        .cat-label-Utilities    { color: #f97316; }
+        .cat-label-Investment   { color: #eab308; }
+        .cat-label-Other        { color: #64748b; }
+        .cat-label-default      { color: #94a3b8; }
+
+        .sticky-amount-slim {
+            background: #2563EB;
+            color: white;
+            padding: 8px 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-[#F8FAFC]">
@@ -393,6 +411,11 @@
                 }
             };
 
+            const getCategoryLabelClass = (type) => {
+                const map = { Housing: 'cat-label-Housing', Insurance: 'cat-label-Insurance', Subscription: 'cat-label-Subscription', Utilities: 'cat-label-Utilities', Investment: 'cat-label-Investment', Other: 'cat-label-Other' };
+                return map[type] || 'cat-label-default';
+            };
+
             const getDotColorClass = (type) => {
                 switch(type) {
                     case 'Insurance': return 'bg-red-500';
@@ -417,7 +440,7 @@
                     e('div', { className: "sticky-nav-white" },
                         e('div', { className: "flex items-center justify-between w-full" }, 
                             e('div', { className: "flex items-center" },
-                                e('img', { src: './Contractlybe.svg', alt: 'Contractly Logo', className: "h-5 w-auto" })
+                                e('img', { src: './Contractlybe.svg', alt: 'Contractly Logo', className: "h-5 w-auto cursor-pointer", onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) })
                             ),
                             e('div', { className: "flex items-center gap-2" },
                                 e('div', { className: "text-right leading-none" },
@@ -431,15 +454,9 @@
                             )
                         )
                     ),
-                    e('div', { className: "sticky-amount-green" },
-                        e('div', { className: "flex flex-col" },
-                            e('p', { className: "text-[10px] font-medium opacity-50 uppercase tracking-widest leading-none mb-1" }, `Per ${viewMode === 'monthly' ? 'maand' : 'jaar'}`),
-                            e('p', { className: "text-xl font-extrabold leading-none text-white" }, `€ ${formatEuro(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12)}`)
-                        ),
-                        income > 0 && e('div', { className: "text-right" },
-                            e('p', { className: "text-[10px] font-medium opacity-50 uppercase tracking-widest leading-none mb-1" }, "Overschot"),
-                            e('p', { className: "text-xl font-extrabold leading-none text-white" }, `€ ${formatEuro(viewMode === 'monthly' ? stats.remaining : stats.remaining * 12)}`)
-                        )
+                    e('div', { className: "sticky-amount-slim" },
+                        e('p', { className: "text-[10px] font-bold opacity-50 uppercase tracking-widest" }, `Totaal per ${viewMode === 'monthly' ? 'maand' : 'jaar'}`),
+                        e('p', { className: "text-sm font-extrabold" }, `€ ${formatEuro(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12)}`)
                     )
                 ),
 
@@ -447,7 +464,7 @@
                     e('div', { className: "max-w-md mx-auto" },
                         e('div', { className: "flex items-center justify-between mb-6" }, 
                             e('div', { className: "flex items-center" },
-                                e('img', { src: './Contractlybe.svg', alt: 'Contractly Logo', className: "h-5 w-auto" })
+                                e('img', { src: './Contractlybe.svg', alt: 'Contractly Logo', className: "h-5 w-auto cursor-pointer", onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) })
                             ),
                             e('div', { className: "flex items-center gap-2" },
                                 e('div', { className: "text-right leading-none" },
@@ -460,19 +477,20 @@
                                 )
                             )
                         ),
-                        e('div', { ref: heroRef, className: `bg-blue-600 border border-slate-200 card-rounded transition-all duration-500 text-slate-900 relative overflow-hidden p-6` },
+                        activeTab === 'list'
+                        ? e('div', { ref: heroRef, className: "bg-blue-600 border border-slate-200 card-rounded transition-all duration-500 text-slate-900 relative overflow-hidden p-6" },
                             e('div', { className: "absolute -right-10 -top-10 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl" }),
                             e('div', { className: "relative z-10" },
-                                e('div', { className: "flex justify-between items-center mb-1" },
+                                e('div', { className: "flex justify-between items-center" },
                                     e('p', { className: "total-label text-white opacity-50" }, `Totaal per ${viewMode === 'monthly' ? 'maand' : 'jaar'}`),
                                     e('button', { onClick: () => setViewMode(viewMode === 'monthly' ? 'yearly' : 'monthly'), className: "bg-white/20 border border-white/10 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all backdrop-blur-sm" }, `Toon per ${viewMode === 'monthly' ? 'jaar' : 'maand'}`)
                                 ),
-                                e('h2', { className: `total-amount transition-all duration-500 text-4xl text-white font-extrabold` }, `€ ${formatEuro(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12)}`),
-                                e('div', { className: `header-stats-container mt-6 border-t border-opacity-10 border-slate-100 pt-4 text-left ${activeTab === 'insights' || activeTab === 'savings' || activeTab === 'wealth' ? 'collapsed' : ''}` },
+                                e('h2', { className: "total-amount transition-all duration-500 text-4xl text-white font-extrabold" }, `€ ${formatEuro(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12)}`),
+                                e('div', { className: "header-stats-container mt-6 border-t border-opacity-10 border-slate-100 pt-4 text-left" },
                                     e('div', { className: "flex justify-between items-end" },
                                         e('div', null, 
                                             e('p', { className: "label-small opacity-50 text-white" }, "Aantal"), 
-                                            e('p', { className: "text-base font-bold text-white" }, `${stats.count} ${stats.count === 1 ? 'vaste uitgave' : 'vaste uitgaven'}`)
+                                            e('p', { className: "text-base font-bold text-white" }, `${stats.count} ${stats.count === 1 ? 'uitgave' : 'uitgaven'}`)
                                         ),
                                         income > 0 && e('div', { className: "text-right" },
                                             e('p', { className: "label-small opacity-50 text-white" }, "Overschot"),
@@ -481,6 +499,10 @@
                                     )
                                 )
                             )
+                        )
+                        : e('div', { ref: heroRef, className: "bg-blue-600 rounded-xl px-5 py-3 flex items-center justify-between" },
+                            e('p', { className: "text-[10px] font-bold text-white/50 uppercase tracking-widest" }, `Totaal per ${viewMode === 'monthly' ? 'maand' : 'jaar'}`),
+                            e('p', { className: "text-base font-extrabold text-white" }, `€ ${formatEuro(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12)}`)
                         )
                     )
                 ),
@@ -497,12 +519,12 @@
                                 e('p', { className: "text-base text-slate-700 leading-snug" }, 
                                     stats.expensive 
                                     ? e('span', null, 'Je grootste uitgave is ', e('strong', { className: "font-extrabold text-blue-600" }, stats.expensive.name), `, en abonnementen kosten je `, e('strong', { className: "font-extrabold" }, `€ ${formatEuro(stats.subscriptionTotal)}`), ` per maand.`)
-                                    : e('strong', { className: "font-medium text-slate-700" }, "Voeg je eerste vaste last toe.")
+                                    : e('strong', { className: "font-medium text-slate-700" }, "Voeg je eerste maandelijkse uitgave toe.")
                                 )
                             )
                         )
                     ),
-                    e('section', { className: "space-y-4 mb-6" },
+                    e('section', { className: "space-y-4" },
                         e('div', { 
                             ref: filterRef,
                             onMouseDown: handleMouseDown,
@@ -512,20 +534,17 @@
                             className: "flex gap-2 overflow-x-auto pb-2 scrollbar-hide grab-scroll active:cursor-grabbing" 
                         },
                             ['All', 'Housing', 'Insurance', 'Subscription', 'Utilities', 'Investment', 'Other'].map(t => 
-                                e('button', { key: t, onClick: () => setActiveFilter(t), className: `px-5 py-2.5 rounded-full text-base font-bold whitespace-nowrap border shrink-0 transition-all ${activeFilter === t ? 'bg-blue-600 text-[#FFFFFF] border-blue-600' : 'bg-white text-slate-500 border-slate-200'}` }, t === 'All' ? 'Alles' : getTypeLabel(t))
+                                e('button', { key: t, onClick: () => setActiveFilter(t), className: `px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap border shrink-0 transition-all ${activeFilter === t ? 'bg-blue-600 text-[#FFFFFF] border-blue-600' : 'bg-white text-slate-500 border-slate-200'}` }, t === 'All' ? 'Alles' : getTypeLabel(t))
                             )
                         ),
-                        e('div', { className: "flex items-center justify-between px-1" },
-                            e('div', { className: "flex bg-slate-200/50 p-1 rounded-xl" },
-                                ['active', 'archived'].map(s => e('button', { key: s, onClick: () => setStatusFilter(s), className: `px-4 py-1.5 rounded-lg label-small transition-all ${statusFilter === s ? 'bg-white text-slate-900' : 'text-slate-500'}` }, s === 'active' ? 'Actief' : 'Archief'))
-                            ),
-                            e('button', { onClick: openAddModal, className: "text-blue-600 font-bold text-base flex items-center gap-1" }, e(Icon, { name: 'plus', size: 16 }), "Toevoegen")
+                        e('div', { className: "flex items-center justify-end px-1" },
+                            e('span', null)
                         )
                     ),
                     e('section', { className: "space-y-3 text-left capitalize" },
-                        e('div', { className: "flex items-baseline justify-between mb-2 px-1" }, 
+                        e('div', { className: "flex items-center justify-between mb-2 px-1" }, 
                             e('h3', { className: "text-xs font-bold text-slate-400 uppercase tracking-wider" }, "Maandelijkse uitgaven"),
-                            filteredContracts.length === 0 && contracts.length > 0 && e('span', { className: "text-[12px] text-slate-300 normal-case leading-none" }, "Geen items gevonden")
+                            e('button', { onClick: openAddModal, className: "text-blue-600 font-bold text-base flex items-center gap-1" }, e(Icon, { name: 'plus', size: 14 }), "Toevoegen")
                         ),
                         
                         // NEW DESIGN: Grouped List Container
@@ -534,7 +553,7 @@
                                 e('div', { 
                                     key: contract.id, 
                                     onClick: () => setSelectedContract(contract), 
-                                    className: `p-4 flex items-center gap-4 clickable hover:bg-slate-50 transition-colors ${index !== filteredContracts.length - 1 ? 'border-b border-slate-50' : ''}` 
+                                    className: `p-4 flex items-center gap-4 transition-colors ${index !== filteredContracts.length - 1 ? 'border-b border-slate-100' : ''}` 
                                 },
                                     // Smaller, rounder icon container
                                     e('div', { className: `w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${getIconColorClass(contract.type)}` }, 
@@ -549,7 +568,7 @@
                                     ),
                                     e('div', { className: "text-right shrink-0" },
                                         e('p', { className: "font-bold text-[15px] text-slate-900" }, `€ ${formatEuro(getMonthlyCost(contract))}`),
-                                        e('p', { className: "text-[9px] text-slate-400 font-bold uppercase" }, "per maand")
+                                        e('p', { className: "text-[10px] text-slate-400 font-bold uppercase" }, "per maand")
                                     ),
                                     e(Icon, { name: 'chevron-right', size: 14, className: "text-slate-300" })
                                 )
@@ -812,12 +831,21 @@
                 ),
 
                 activeTab === 'wealth' && e('main', { className: "max-w-md mx-auto px-5 -mt-4 animate-sheet space-y-4" },
-                    e('section', { className: "bg-white p-6 rounded-[12px] border border-slate-100 space-y-6 text-left" },
-                        e('div', null,
-                            e('h3', { className: "text-xl font-bold text-slate-900 mb-2" }, "Investeer in je toekomst"),
-                            e('p', { className: "text-base text-slate-400 leading-relaxed pb-2" }, "Heb je je spaardoelen bereikt? Kijk dan eens wat je kunt opbouwen door je overschot slim maandelijks te investeren.")
+                    e('section', { className: "bg-white p-6 rounded-[12px] border border-slate-100 text-left" },
+                        // Introductie tekst
+                        e('div', { className: "mb-6" },
+                            e('h3', { className: "text-xl font-bold text-slate-900 mb-3" }, "Investeer in je toekomst"),
+                            e('p', { className: "text-base text-slate-400 leading-relaxed" }, "Heb je je spaardoelen bereikt? Kijk dan eens wat je kunt opbouwen door je overschot slim maandelijks te investeren.")
                         ),
-                        e('div', { className: "" },
+
+                        // Nieuwe Sectie met lijntje en icoon (vergelijkbaar met spaardoel)
+                        e('div', { className: "pt-6 border-t border-slate-50" },
+                            e('div', { className: "flex items-center gap-2 mb-6" },
+                                e(Icon, { name: 'badge-euro', size: 18, className: "text-blue-600" }),
+                                e('h4', { className: "text-[16px] font-bold text-slate-900" }, "Investering simuleren")
+                            ),
+
+                            // Overschot en Inleg indicators
                             e('div', { className: "flex justify-between items-end mb-4" },
                                 e('div', null,
                                     e('p', { className: "label-small text-slate-400" }, "Overschot"),
@@ -828,7 +856,7 @@
                                     e('p', { className: "text-2xl font-bold text-slate-900" }, `€ ${formatEuro(investMonthly * investYears * 12)}`)
                                 )
                             ),
-                            e('div', { className: "w-full h-4 bg-slate-100 rounded-full overflow-hidden flex mb-8" },
+                            e('div', { className: "w-full h-4 bg-slate-100 rounded-full overflow-hidden flex mb-4" },
                                 e('div', { 
                                     className: "h-full bg-yellow-300 transition-all duration-300",
                                     style: { width: `${(investMonthly / Math.max(1, stats.remaining)) * 100}%` }
@@ -879,11 +907,11 @@
                                 )
                             )
                         ),
-                        e('div', { className: "pt-6 border-t border-slate-100 mt-6" },
+                        e('div', { className: "pt-6 border-t border-slate-100 mt-4" },
                             e('div', { className: "flex items-center justify-between mb-6" },
                                 e('div', null,
                                     e('p', { className: "label-small text-slate-400 mb-1" }, "Geschat eindkapitaal"),
-                                    e('h4', { className: "text-3xl font-black text-slate-900" }, `€ ${formatEuro(investmentResult)}`)
+                                    e('h4', { className: "text-3xl font-black text-emerald-600" }, `€ ${formatEuro(investmentResult)}`)
                                 )
                             ),
                             e('p', { className: "text-[11px] text-slate-400 leading-tight italic" }, 
@@ -914,7 +942,7 @@
                 activeTab === 'savings' && e('main', { className: "max-w-md mx-auto px-5 -mt-4 animate-sheet space-y-4" },
                     e('section', { className: "bg-white p-6 rounded-[12px] border border-slate-100 text-left" },
                         e('h3', { className: "text-xl font-bold text-slate-900 mb-3" }, "Slim sparen en besparen"),
-                        e('p', { className: "text-base text-slate-400 leading-relaxed mb-8" }, "Bepaal je spaardoel en gebruik onderstaande onafhankelijke tools om te controleren of je nog steeds de beste prijs betaalt. Bekijk, vergelijk en stap over in 1-2-3."),
+                        e('p', { className: "text-base text-slate-400 leading-relaxed mb-6" }, "Bepaal je spaardoel en gebruik onderstaande onafhankelijke tools om te controleren of je nog steeds de beste prijs betaalt. Bekijk, vergelijk en stap over in 1-2-3."),
                         
                         e('div', { className: "pt-6 border-t border-slate-50" },
                             e('div', { className: "flex items-center gap-2 mb-4" },
@@ -922,32 +950,34 @@
                                 e('h4', { className: "text-[16px] font-bold text-slate-900" }, "Spaardoel instellen")
                             ),
                             e('div', { className: "space-y-4" },
-                                e('div', null,
-                                    e('label', { className: "label-small text-slate-400 ml-1 mb-2 block" }, "Doelbedrag"),
-                                    e('div', { className: "flex items-center gap-2 bg-slate-50 p-3 rounded-xl" },
-                                        e('span', { className: "text-lg font-bold text-slate-300" }, "€ "),
-                                        e('input', { 
-                                            type: 'text',
-                                            inputMode: 'numeric',
-                                            className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", 
-                                            value: formatNumber(savingGoalAmount), 
-                                            onChange: ev => setSavingGoalAmount(ev.target.value.replace(/\./g, '')), 
-                                            placeholder: "5.000" 
-                                        })
-                                    )
-                                ),
-                                e('div', null,
-                                    e('label', { className: "label-small text-slate-400 ml-1 mb-2 block" }, "Termijn (maanden)"),
-                                    e('div', { className: "flex items-center gap-2 bg-slate-50 p-3 rounded-xl" },
-                                        e(Icon, { name: 'calendar', size: 16, className: "text-slate-300" }),
-                                        e('input', { 
-                                            type: 'text', 
-                                            inputMode: 'numeric',
-                                            className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", 
-                                            value: formatNumber(savingGoalMonths), 
-                                            onChange: ev => setSavingGoalMonths(ev.target.value.replace(/\./g, '')), 
-                                            placeholder: "12" 
-                                        })
+                                e('div', { className: "grid grid-cols-2 gap-3" },
+                                    e('div', null,
+                                        e('label', { className: "label-small text-slate-400 ml-1 mb-2 block" }, "Doelbedrag"),
+                                        e('div', { className: "flex items-center gap-2 bg-slate-50 p-3 rounded-xl" },
+                                            e('span', { className: "text-lg font-bold text-slate-300" }, "€"),
+                                            e('input', { 
+                                                type: 'text',
+                                                inputMode: 'numeric',
+                                                className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", 
+                                                value: formatNumber(savingGoalAmount), 
+                                                onChange: ev => setSavingGoalAmount(ev.target.value.replace(/\./g, '')), 
+                                                placeholder: "" 
+                                            })
+                                        )
+                                    ),
+                                    e('div', null,
+                                        e('label', { className: "label-small text-slate-400 ml-1 mb-2 block" }, "Termijn (maanden)"),
+                                        e('div', { className: "flex items-center gap-2 bg-slate-50 p-3 rounded-xl" },
+                                            e(Icon, { name: 'calendar', size: 16, className: "text-slate-300 shrink-0" }),
+                                            e('input', { 
+                                                type: 'text', 
+                                                inputMode: 'numeric',
+                                                className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", 
+                                                value: formatNumber(savingGoalMonths), 
+                                                onChange: ev => setSavingGoalMonths(ev.target.value.replace(/\./g, '')), 
+                                                placeholder: "" 
+                                            })
+                                        )
                                     )
                                 ),
                                 savingGoalAmount > 0 && savingGoalMonths > 0 && e('div', { className: "mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100" },
@@ -1064,7 +1094,7 @@
                             e('p', { className: "label-small text-blue-600" }, "Besparings-scan")
                         ),
                         e('h4', { className: "text-xl font-bold text-slate-900 mb-3" }, "Mijn bespaaroverzicht"),
-                        e('p', { className: "text-base text-slate-500 leading-relaxed mb-6" }, "We berekenen deze besparing aan de hand van jouw huidige maandelijkse vaste lasten."),
+                        e('p', { className: "text-base text-slate-500 leading-relaxed mb-6" }, "We berekenen deze besparing aan de hand van jouw huidige maandelijkse uitgaven."),
                         e('div', { className: "space-y-4" },
                             [5, 10, 15].map(pct => 
                                 e('div', { key: pct, className: "flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-blue-100" },
@@ -1121,14 +1151,14 @@
                     },
                         e('div', { className: "flex justify-between items-center mb-6" }, 
                             e('h2', { className: "text-xl font-bold text-slate-900" }, isEditing ? 'Uitgave bewerken' : 'Nieuwe uitgave'), 
-                            e('button', { type: 'button', onClick: () => setIsModalOpen(false), className: "p-2 bg-slate-50 text-slate-400 rounded-full" }, e(Icon, { name: 'x', size: 20 }))
+                            e('button', { type: 'button', onClick: () => setIsModalOpen(false), className: "text-slate-400 rounded-full" }, e(Icon, { name: 'x', size: 20 }))
                         ),
                         e('div', { className: "space-y-4" },
                             e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-3 block" }, "Naam"), e('input', { required: true, className: "capitalize w-full bg-slate-50 rounded-xl py-4 px-5 text-base font-bold border-none", value: formData.name, onChange: ev => setFormData({...formData, name: ev.target.value}) })),
                             e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-3 block" }, "Aanbieder / Platform"), e('input', { className: "capitalize w-full bg-slate-50 rounded-xl py-4 px-5 text-base font-bold border-none", value: formData.provider, onChange: ev => setFormData({...formData, provider: ev.target.value}) })),
                             e('div', { className: "grid grid-cols-2 gap-4" },
                                 e('div', null, 
-                                    e('label', { className: "label-small text-slate-400 ml-2 mb-3 block" }, "Type"), 
+                                    e('label', { className: `label-small ml-2 mb-3 block text-slate-400` }, "Type"), 
                                     e('select', { required: true, className: "w-full bg-slate-50 rounded-xl py-4 px-5 text-base font-bold border-none appearance-none", value: formData.type, onChange: ev => setFormData({...formData, type: ev.target.value}) }, 
                                         e('option', { value: '', disabled: true }, 'Selecteer...'), 
                                         ['Subscription', 'Insurance', 'Housing', 'Utilities', 'Investment', 'Other'].map(opt => e('option', { key: opt, value: opt }, getTypeLabel(opt)))
@@ -1154,7 +1184,7 @@
                                 formData.isShared && e('div', { className: "flex items-center justify-between bg-white p-3 rounded-xl" }, e('span', { className: "text-base font-bold text-slate-400" }, "Aantal personen:"), e('input', { type: 'number', inputMode: 'numeric', className: "w-16 text-center font-bold text-blue-600 border-none", value: formData.splitWith, onChange: ev => setFormData({...formData, splitWith: ev.target.value}) }))
                             ),
                             e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-3 block" }, "Frequentie"), e('div', { className: "flex bg-slate-100 p-1 rounded-xl" }, ['weekly', 'monthly', 'quarterly', 'yearly'].map(f => e('button', { key: f, type: 'button', onClick: () => setFormData({...formData, frequency: f}), className: `flex-1 py-3 rounded-xl text-[12px] font-bold transition-all ${formData.frequency === f ? 'bg-white text-blue-600' : 'text-slate-500'}` }, f === 'weekly' ? 'Week' : f === 'monthly' ? 'Maand' : f === 'quarterly' ? '3 mnd' : 'Jaar')))),
-                            e('button', { type: 'submit', className: "w-full bg-blue-600 text-white py-5 button-rounded font-bold text-xl mt-4 flex items-center justify-center gap-2" }, e(Icon, { name: 'save', size: 20 }), isEditing ? 'Opslaan' : 'Toevoegen')
+                            e('button', { type: 'submit', className: "w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-base mt-4 flex items-center justify-center gap-2" }, e(Icon, { name: 'save', size: 18 }), isEditing ? 'Opslaan' : 'Toevoegen')
                         )
                     )
                 ),
@@ -1162,8 +1192,8 @@
                 selectedContract && e('div', { className: "fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[110] flex items-end justify-center" },
                     e('div', { className: "bg-white w-full max-w-md rounded-t-[20px] p-6 animate-sheet text-left capitalize" },
                         e('div', { className: "flex justify-between items-start mb-8" },
-                            e('div', null, e('span', { className: "label-small bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg mb-2 inline-block" }, getTypeLabel(selectedContract.type)), e('h2', { className: "text-xl font-bold text-slate-900 leading-tight" }, selectedContract.name), e('p', { className: "text-slate-400 font-medium normal-case" }, selectedContract.provider || 'Geen aanbieder')),
-                            e('button', { onClick: () => setSelectedContract(null), className: "p-3 bg-slate-50 text-slate-400 rounded-xl" }, e(Icon, { name: 'x', size: 20 }))
+                            e('div', null, e('span', { className: `label-small ${getIconColorClass(selectedContract.type)} px-2.5 py-1 rounded-lg mb-2 inline-block` }, getTypeLabel(selectedContract.type)), e('h2', { className: "text-xl font-bold text-slate-900 leading-tight" }, selectedContract.name), e('p', { className: "text-slate-400 font-medium normal-case" }, selectedContract.provider || 'Geen aanbieder')),
+                            e('button', { onClick: () => setSelectedContract(null), className: "text-slate-400 rounded-xl" }, e(Icon, { name: 'x', size: 20 }))
                         ),
                         e('div', { className: "grid grid-cols-2 gap-4 mb-8" },
                             e('div', { className: "bg-slate-50 p-5 rounded-[12px] border border-slate-100" }, 
@@ -1190,10 +1220,7 @@
                             )
                         ),
                         e('div', { className: "space-y-3" },
-                            e('div', { className: "flex gap-3" },
-                                e('button', { onClick: () => { const updated = {...selectedContract, status: selectedContract.status === 'active' ? 'archived' : 'active'}; setContracts(contracts.map(c => c.id === selectedContract.id ? updated : c)); setSelectedContract(null); }, className: "flex-1 py-4 rounded-xl font-bold flex items-center justify-center gap-2 bg-slate-100 text-slate-600" }, e(Icon, { name: 'archive', size: 18 }), selectedContract.status === 'active' ? 'Archiveren' : 'Activeren'),
-                                e('button', { onClick: () => { setIsEditing(true); setFormData(selectedContract); setIsModalOpen(true); setSelectedContract(null); }, className: "flex-1 bg-blue-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2" }, e(Icon, { name: 'edit-3', size: 18 }), "Bewerken")
-                            ),
+                            e('button', { onClick: () => { setIsEditing(true); setFormData(selectedContract); setIsModalOpen(true); setSelectedContract(null); }, className: "w-full bg-blue-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2" }, e(Icon, { name: 'edit-3', size: 18 }), "Bewerken"),
                             e('button', { onClick: () => { setContracts(contracts.filter(c => c.id !== selectedContract.id)); setSelectedContract(null); }, className: "w-full bg-red-50 text-red-600 py-4 rounded-xl font-bold flex items-center justify-center gap-2" }, e(Icon, { name: 'trash-2', size: 18 }), "Verwijderen")
                         )
                     )
