@@ -1,1235 +1,1020 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Monly - Al je maandelijkse uitgaven in één helder overzicht</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Monly">
-    <link rel="apple-touch-icon" href="./Logo.png">
-    <link rel="icon" type="image/x-icon" href="./Logo.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,100,1;1,9..144,100..900,100,1&family=Google+Sans+Flex:opsz,wght@6..144,1..1000&family=Host+Grotesk:ital,wght@0,300..800;1,300..800&family=Rethink+Sans:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet">
-    <meta name="theme-color" content="#F8FAFC">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker geregistreerd!', reg))
-            .catch(err => console.log('Service Worker mislukt', err));
-        });
-      }
-    </script>
-    
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        
-        :root {
-            --primary-color: #FFFFFF;
-            --primary-dark: #F1F5F9;
-            --accent-color: #2563EB;
-            --text-main: #1E293B;
-            --background-color: #F8FAFC;
-        }
-
-        body { 
-            font-family: 'Host Grotesk', sans-serif; 
-            -webkit-tap-highlight-color: transparent;
-            font-weight: 500;
-            color: var(--text-main);
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-        }
-
-        input, textarea, select {
-            user-select: text;
-            -webkit-user-select: text;
-        }
-
-        .fraunces-h1 { 
-            font-family: 'Host Grotesk', serif; 
-            font-weight: 500; 
-            font-variation-settings: "SOFT" 100, "WONK" 1;
-            font-size: 1.625rem;
-            line-height: 1.1;
-            letter-spacing: -0.02em;
-        }
-
-        .heading-xl { font-size: 2rem; font-weight: 700; letter-spacing: -0.015em; line-height: 1.2; }
-        .heading-lg { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.015em; }
-        .total-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; opacity: 0.6; }
-        .total-amount { font-size: 2.5rem; font-weight: 600; }
-        .label-small { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
-
-        .card-rounded { border-radius: 12px; }
-        .card-rounded-lg { border-radius: 12px; }
-        .button-rounded { border-radius: 99px; }
-        .input-rounded { border-radius: 99px; }
-
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-
-        @keyframes slideInUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .animate-sheet { animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-
-        .clickable { cursor: pointer; transition: all 0.2s ease; }
-        .clickable:hover { opacity: 0.8; }
-        .clickable:active { transform: scale(0.98); }
-        
-        .tab-bar {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: white;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-around;
-            padding: 12px 0 24px 0;
-            z-index: 40;
-        }
-
-        .grab-scroll { cursor: grab; user-select: none; -webkit-user-drag: none; }
-        .grab-scroll:active { cursor: grabbing; }
-
-        .header-stats-container {
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            max-height: 200px;
-            opacity: 1;
-            overflow: hidden;
-        }
-        .header-stats-container.collapsed {
-            max-height: 0;
-            opacity: 0;
-            margin-top: 0;
-            padding-top: 0;
-            border-top-width: 0;
-        }
-
-        .tip-card {
-            border: 1px solid #f1f5f9;
-            background-color: white;
-            transition: transform 0.2s ease;
-        }
-        .tip-card:active { transform: scale(0.98); }
-
-        .sticky-header {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            z-index: 100;
-            transform: translateY(-105%);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .sticky-header.visible { transform: translateY(0); }
-        
-        .sticky-nav-white {
-            background: white;
-            padding: 16px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .sticky-amount-green {
-            background: #2563EB;
-            color: white;
-            padding: 14px 22px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        }
-
-        /* Updated Slider CSS */
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 8px; /* Increased height to match progress bars (h-2 = 8px) */
-            border-radius: 99px;
-            background: transparent; /* Background handled by inline style */
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 20px;
-            width: 20px;
-            border-radius: 50%;
-            background: #2563EB;
-            cursor: pointer;
-            margin-top: -6px; /* (8px track - 20px thumb) / 2 = -6px to center */
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-            position: relative;
-            z-index: 2;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 8px;
-            cursor: pointer;
-            background: transparent; /* Important for gradient to show */
-            border-radius: 99px;
-        }
-
-        .cat-label-Housing      { color: #3b82f6; }
-        .cat-label-Insurance    { color: #ef4444; }
-        .cat-label-Subscription { color: #10b981; }
-        .cat-label-Utilities    { color: #f97316; }
-        .cat-label-Investment   { color: #eab308; }
-        .cat-label-Other        { color: #64748b; }
-        .cat-label-default      { color: #94a3b8; }
-
-        .sticky-amount-slim {
-            background: #2563EB;
-            color: white;
-            padding: 8px 22px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            display: none;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Imposter - The Party Game" />
+  <meta name="theme-color" content="#111111" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="./Logo.png">
+  <link rel="icon" type="image/x-icon" href="./Logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jersey+15&display=swap" rel="stylesheet">
+  <title>Imposter</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body, #root { height: 100%; background: #111; }
+    body { overscroll-behavior: none; }
+  </style>
 </head>
-<body class="bg-[#F8FAFC]">
-    <div id="root"></div>
+<body>
+  <div id="root"></div>
 
-    <script>
-        const e = React.createElement;
-        const { useState, useMemo, useEffect, useRef } = React;
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-        const Icon = ({ name, size = 18, className = "", fill = "none" }) => 
-            e('i', { 'data-lucide': name, className, style: { width: size, height: size, strokeWidth: 2, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fill } });
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
 
-        const App = () => {
-            const [activeTab, setActiveTab] = useState('list');
-            const [income, setIncome] = useState(() => localStorage.getItem('pwa_income') || '');
-            const [householdType, setHouseholdType] = useState(() => localStorage.getItem('pwa_household') || 'single');
-            const [groceries, setGroceries] = useState(() => localStorage.getItem('pwa_groceries') || '');
-            const [leisure, setLeisure] = useState(() => localStorage.getItem('pwa_leisure') || '');
-            const [isHeaderSticky, setIsHeaderSticky] = useState(false);
-            const heroRef = useRef(null);
+    const INITIAL_PROMPTS = [
+      "Wie zou het meest waarschijnlijk beroemd worden op social media?",
+      "Wie zou het meest waarschijnlijk overleven op een onbewoond eiland?",
+      "Wie zou het meest waarschijnlijk per ongeluk iets in brand steken terwijl hij/zij kookt?",
+      "Wie zou het meest waarschijnlijk een geheime dubbele identiteit hebben?",
+      "Wie zou het meest waarschijnlijk met een vreemde op vakantie gaan?",
+      "Wie zou het meest waarschijnlijk een boek schrijven?",
+      "Wie zou het meest waarschijnlijk miljonair worden?",
+      "Wie zou het meest waarschijnlijk in het buitenland gaan wonen?",
+      "Wie zou het meest waarschijnlijk een uitvinding maken die de wereld verandert?",
+      "Wie zou het meest waarschijnlijk een taal leren in 3 maanden?",
+      "Wie zou het meest waarschijnlijk een extreme sport proberen?",
+      "Wie zou het meest waarschijnlijk meedoen aan De Mol?",
+      "Wie zou het meest waarschijnlijk uit een reality show worden gegooid in de eerste aflevering?",
+      "Wie zou het meest waarschijnlijk per ongeluk een gênante foto online zetten?",
+      "Wie zou het meest waarschijnlijk verdwalen in een eigen stad?",
+      "Wie zou het meest waarschijnlijk elke avond takeaway bestellen?",
+      "Wie zou het meest waarschijnlijk zijn eigen verjaardag vergeten?",
+      "Wie zou het meest waarschijnlijk een boek kopen maar nooit lezen?",
+      "Wie zou het meest waarschijnlijk zijn loon uitgeven op de eerste dag?",
+      "Wie zou het meest waarschijnlijk heimwee krijgen na één nacht weg van huis?",
+      "Wie zou het meest waarschijnlijk boos worden als iemand zijn eten aanraakt?",
+      "Wie zou het meest waarschijnlijk een hele ruzie beginnen in de groepschat en daarna 'ik ga hier niet eens op reageren' zeggen?",
+      "Wie zou het meest waarschijnlijk 3 uur scrollen en dan zeggen dat hij/zij geen tijd had?",
+      "Wie zou het meest waarschijnlijk een conspiracy theorie nét iets te serieus nemen?",
+      "Wie zou het meest waarschijnlijk per ongeluk een voice memo van 4 minuten sturen?",
+      "Wie zou het meest waarschijnlijk doen alsof hij/zij een serie al heeft gezien om niet achter te lopen?",
+      "Wie zou het meest waarschijnlijk 47 tabbladen open hebben staan?",
+      "Wie zou het meest waarschijnlijk huilen om een reclame?",
+      "Wie zou het meest waarschijnlijk een powerbank meenemen naar een festival en hem zelf vergeten op te laden?",
+      "Wie zou het meest waarschijnlijk zijn/haar wachtwoord resetten en het nieuwe meteen weer vergeten?",
+      "Wie zou het meest waarschijnlijk een meme uitleggen waardoor het niet meer grappig is?",
+      "Wie zou het meest waarschijnlijk per ongeluk 'reply all' doen?",
+      "Wie zou het meest waarschijnlijk een airfryer kopen en daarna alles erin gooien?",
+      "Wie zou het meest waarschijnlijk een huisdier nemen en het een veel te menselijke naam geven?",
+      "Wie zou het meest waarschijnlijk 1 aflevering kijken en eindigen om 04:00 's nachts?",
+      "Wie zou het meest waarschijnlijk een impulsieve tattoo laten zetten?",
+      "Wie zou het meest waarschijnlijk een online discussie winnen… in zijn/haar hoofd onder de douche?",
+      "Wie zou het meest waarschijnlijk per ongeluk een screenshot terugsturen naar de persoon waar het over ging?",
+      "Wie zou het meest waarschijnlijk 'ik kom eraan' sturen terwijl hij/zij nog thuis op de bank zit?",
+      "Wie zou het meest waarschijnlijk een nieuwe hobby beginnen en na 2 weken weer stoppen?",
+      "Wie zou het meest waarschijnlijk huilen van het lachen om zijn/haar eigen grap?",
+      "Wie zou het meest waarschijnlijk een pakketje bestellen en elke 10 minuten de track & trace checken?",
+      "Wie zou het meest waarschijnlijk een hele maaltijd plannen rond één kortingsactie?",
+      "Wie zou het meest waarschijnlijk een Excel-sheet maken voor iets totaal onnodigs?"
+    ];
+
+    const PHASES = {
+      SETUP:           "setup",
+      QUESTION_TURN:   "question_turn",
+      SHOW_QUESTION:   "show_question",
+      WRITE:           "write",
+      COUNTDOWN:       "countdown",
+      SHOW_NAMES:      "show_names",
+      REVEAL_QUESTION: "reveal_question",
+      RESULT:          "result",
+      SCOREBOARD:      "scoreboard",
+    };
+
+    const DARK   = "#111111";
+    const CARD   = "#1c1c1c";
+    const BORDER = "#2a2a2a";
+    const ACCENT = "#e8c547";
+    const TEXT   = "#f0f0f0";
+    const MUTED  = "#888888";
+    const RED    = "#e05252";
+    const GREEN  = "#52c98a";
+
+    const css = `
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      body { margin: 0; background: ${DARK}; overscroll-behavior-y: none; }
+      .btn-active { transition: transform 0.1s ease, filter 0.2s ease; }
+      .btn-active:active { transform: scale(0.96); filter: brightness(0.9); }
+      .input-focus:focus { border-color: ${ACCENT} !important; outline: none; box-shadow: 0 0 0 2px ${ACCENT}44; }
+      ::-webkit-scrollbar { width: 0px; background: transparent; }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+    `;
+
+    const S = {
+      page: {
+        height: "100svh",
+        background: DARK,
+        fontFamily: "'Outfit', sans-serif",
+        color: TEXT,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        animation: "fadeIn 0.2s ease-in-out",
+      },
+      inner: {
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        padding: "32px 24px 40px",
+        maxWidth: "500px",
+        width: "100%",
+        margin: "0 auto",
+        overflowY: "auto"
+      },
+      footer: {
+        padding: "16px 24px 40px",
+        maxWidth: "500px",
+        width: "100%",
+        margin: "0 auto",
+        background: DARK,
+        borderTop: `1px solid ${BORDER}`
+      },
+      contentCenter: {
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        paddingBottom: "40px",
+      }
+    };
+
+    const Tag = ({ children, color = MUTED }) => (
+      <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase", color, display: "block", marginBottom: 12 }}>
+        {children}
+      </span>
+    );
+
+    const BigBtn = ({ onClick, children, bg = ACCENT, color = "#111", disabled = false, style = {} }) => (
+      <button className={disabled ? "" : "btn-active"} onClick={onClick} disabled={disabled} style={{
+        width: "100%",
+        padding: "20px 24px",
+        background: disabled ? BORDER : bg,
+        color: disabled ? "#555" : color,
+        border: "none",
+        borderRadius: 20,
+        fontSize: 20,
+        fontWeight: 800,
+        fontFamily: "'Outfit', sans-serif",
+        cursor: disabled ? "not-allowed" : "pointer",
+        letterSpacing: "-0.01em",
+        boxShadow: disabled ? "none" : `0 8px 24px ${bg}25`,
+        opacity: disabled ? 0.7 : 1,
+        ...style
+      }}>{children}</button>
+    );
+
+    const GhostBtn = ({ onClick, children, style = {} }) => (
+      <button className="btn-active" onClick={onClick} style={{
+        width: "100%",
+        padding: "20px 24px",
+        background: "transparent",
+        color: MUTED,
+        border: `2px solid ${BORDER}`,
+        borderRadius: 20,
+        fontSize: 18,
+        fontWeight: 700,
+        fontFamily: "'Outfit', sans-serif",
+        cursor: "pointer",
+        ...style
+      }}>{children}</button>
+    );
+
+    const Card = ({ children, style = {} }) => (
+      <div style={{ background: CARD, borderRadius: 20, border: `1px solid ${BORDER}`, padding: "24px", ...style }}>
+        {children}
+      </div>
+    );
+
+    const Divider = () => <div style={{ height: 2, background: BORDER, margin: "24px 0", borderRadius: 2 }} />;
+
+    // ─── Custom Prompts Modal ──────────────────────────────────────────────────
+    
+    const PromptsModal = ({ customQuestions, onAdd, onDelete, onClose }) => {
+      const [qText, setQText] = useState("");
+
+      const handleAdd = () => {
+        if (qText.trim()) {
+          let suffix = qText.trim();
+          if (!suffix.endsWith('?')) suffix += '?';
+          
+          onAdd(`Wie zou het meest waarschijnlijk ${suffix}`);
+          setQText("");
+        }
+      };
+
+      return (
+        <div style={{ 
+          position: "fixed", 
+          inset: 0, 
+          // Achtergrond iets transparanter maken (0.8 ipv 0.99) voor beter blur-effect
+          background: "rgba(17,17,17,0.9)", 
+          // De magische regel voor de blur:
+          backdropFilter: "blur(12px)", 
+          WebkitBackdropFilter: "blur(12px)", // Voor Safari ondersteuning
+          zIndex: 100, 
+          display: "flex", 
+          flexDirection: "column", 
+          alignItems: "center",
+          fontFamily: "'Outfit', sans-serif",
+          animation: "fadeIn 0.2s ease-in-out",
+        }}>
+          <style>{css}</style>
+          <div style={{ 
+            width: "100%", 
+            maxWidth: "500px", 
+            height: "100%", 
+            display: "flex", 
+            flexDirection: "column", 
+            padding: "24px 24px calc(24px + env(safe-area-inset-bottom))" // Rekening houden met inkeping onderaan mobiel
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: TEXT, letterSpacing: "-0.02em" }}>Prompts beheren</h2>
+              <button 
+                onClick={onClose} 
+                className="btn-active"
+                style={{ 
+                  background: "rgba(255,255,255,0.1)", // Subtielere knop passend bij blur
+                  border: "none", 
+                  color: TEXT, 
+                  width: 40, 
+                  height: 40, 
+                  borderRadius: "50%", 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center", 
+                  fontSize: 24, 
+                  fontWeight: 400,
+                  cursor: "pointer"
+                }}
+              >
+                ×
+              </button>
+            </div>
             
-            const [investMonthly, setInvestMonthly] = useState(0);
-            const [investYears, setInvestYears] = useState(10);
-            const [investReturn, setInvestReturn] = useState(7); // Fixed 7% default
+            <div style={{ flex: 1, overflowY: "auto" }}>
+              <div style={{ marginBottom: 32 }}>
+                <Tag color={ACCENT}>Voeg een vraag toe</Tag>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ fontSize: 16, color: TEXT, fontWeight: 600 }}>Wie zou het meest waarschijnlijk</div>
+                  <div style={{ display: "flex", gap: 10 }}>
+                    <input 
+                      className="input-focus" 
+                      placeholder="...dit spel winnen?" 
+                      value={qText} 
+                      onChange={e => setQText(e.target.value.toLowerCase())}
+                      onKeyDown={e => e.key === "Enter" && qText.trim() !== "" && handleAdd()}
+                      style={{ 
+                        flex: 1, 
+                        background: "#222", 
+                        border: `2px solid ${BORDER}`, 
+                        borderRadius: 12, 
+                        padding: 14, 
+                        color: TEXT, 
+                        fontFamily: "inherit", 
+                        fontSize: 16,
+                        minWidth: 0 
+                      }} 
+                    />
+                    <button 
+                      className={qText.trim() === "" ? "" : "btn-active"}
+                      onClick={handleAdd} 
+                      disabled={qText.trim() === ""}
+                      style={{ 
+                        background: ACCENT, 
+                        color: "#111", 
+                        border: "none", 
+                        borderRadius: 12, 
+                        padding: "0 20px", 
+                        fontWeight: 800, 
+                        fontSize: 24,
+                        cursor: qText.trim() === "" ? "default" : "pointer",
+                        opacity: qText.trim() === "" ? 0.3 : 1,
+                        filter: qText.trim() === "" ? "grayscale(0.5)" : "none",
+                        transition: "all 0.3s ease"
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <Tag>Jouw toegevoegde vragen</Tag>
+              {customQuestions.length === 0 ? (
+                <div style={{ color: MUTED, fontSize: 16, textAlign: "center", marginTop: 20 }}>Nog geen eigen vragen toegevoegd.</div>
+              ) : (
+                customQuestions.slice().reverse().map((q, idx) => (
+                  <div key={idx} style={{ padding: "16px 0", borderBottom: `1px solid ${BORDER}`, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                    <div style={{ color: TEXT, fontSize: 16, fontWeight: 500, lineHeight: 1.4 }}>
+                      {q}
+                    </div>
+                    <button onClick={() => onDelete(q)} className="btn-active" style={{ background: RED, color: "#fff", border: "none", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 800, cursor: "pointer", flexShrink: 0 }}>
+                      ×
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
 
-            // Spaardoelen state
-            const [savingGoalAmount, setSavingGoalAmount] = useState(() => localStorage.getItem('pwa_goal_amount') || '');
-            const [savingGoalMonths, setSavingGoalMonths] = useState(() => localStorage.getItem('pwa_goal_months') || '');
+    // ─── Instructions Modal ────────────────────────────────────────────────────
 
-            const [contracts, setContracts] = useState(() => {
-                const saved = localStorage.getItem('pwa_contracts_v5');
-                return saved ? JSON.parse(saved) : [];
-            });
+    const InstructionsModal = ({ onClose }) => {
+      const steps = [
+        { emoji: "🎒", label: "Wat heb je nodig?", text: "1 smartphone + papier en pen per speler (of iets anders om op te schrijven)." },
+        { emoji: "📱", label: "Smartphone doorgeven", text: "Elke speler leest in het geheim zijn vraag. De anderen kijken weg." },
+        { emoji: "😈", label: "Eén heeft een andere vraag", text: "De imposter krijgt een andere vraag — maar weet zelf (nog) niet welke de rest heeft." },
+        { emoji: "✍️", label: "Schrijf een naam op", text: "Iedereen schrijft in het geheim op wie bij zijn vraag past. Nog niet tonen!" },
+        { emoji: "📢", label: "Toon tegelijk", text: "Na het aftellen houden jullie allemaal je papiertje met de naam op omhoog." },
+        { emoji: "🕵️", label: "Vind de imposter", text: "Toon de vraag, discussieer kort en wijs dan tegelijk aan wie jij denkt dat de imposter is." },
+      ];
 
-            const [searchQuery, setSearchQuery] = useState('');
-            const [activeFilter, setActiveFilter] = useState('All');
-            const [statusFilter, setStatusFilter] = useState('active');
-            const [viewMode, setViewMode] = useState('monthly');
-            const [selectedContract, setSelectedContract] = useState(null);
-            const [isModalOpen, setIsModalOpen] = useState(false);
-            const [isEditing, setIsEditing] = useState(false);
-            const [formData, setFormData] = useState({ 
-                name: '', provider: '', type: '', cost: '', frequency: 'monthly', 
-                isShared: false, splitWith: 2 
-            });
+      return (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(17,17,17,0.9)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          zIndex: 100,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          fontFamily: "'Outfit', sans-serif",
+          animation: "fadeIn 0.2s ease-in-out",
+        }}>
+          <style>{css}</style>
+          <div style={{
+            width: "100%",
+            maxWidth: "500px",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            padding: "24px 24px calc(24px + env(safe-area-inset-bottom))"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: TEXT, letterSpacing: "-0.02em", margin: 0 }}>Hoe werkt het spel?</h2>
+              <button
+                onClick={onClose}
+                className="btn-active"
+                style={{
+                  background: "rgba(255,255,255,0.1)",
+                  border: "none",
+                  color: TEXT,
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 24,
+                  fontWeight: 400,
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+              >×</button>
+            </div>
 
-            const benchmarks = {
-                single: { Housing: 850, Utilities: 150, Insurance: 120, Subscription: 75, Investment: 0 },
-                couple: { Housing: 650, Utilities: 120, Insurance: 100, Subscription: 55, Investment: 0 }
-            };
+            <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
+              {steps.map((step, i) => (
+                <div key={i} style={{
+                  display: "flex",
+                  gap: 20,
+                  paddingBottom: 28,
+                  position: "relative",
+                }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
+                    <div style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      background: "#222",
+                      border: `1px solid ${BORDER}`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 18,
+                      flexShrink: 0,
+                    }}>{step.emoji}</div>
+                    {i < steps.length - 1 && (
+                      <div style={{ width: 1, flex: 1, background: BORDER, marginTop: 8 }} />
+                    )}
+                  </div>
+                  <div style={{ paddingTop: 6 }}>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: TEXT, marginBottom: 4 }}>{step.label}</div>
+                    <div style={{ fontSize: 15, color: MUTED, lineHeight: 1.55, fontWeight: 500 }}>{step.text}</div>
+                  </div>
+                </div>
+              ))}
 
-            useEffect(() => {
-                const handleScroll = () => {
-                    if (!heroRef.current) return;
-                    const heroBottom = heroRef.current.getBoundingClientRect().bottom;
-                    setIsHeaderSticky(heroBottom < 60);
-                };
-                window.addEventListener('scroll', handleScroll);
-                return () => window.removeEventListener('scroll', handleScroll);
-            }, []);
+              <div style={{ paddingTop: 24, borderTop: `1px solid ${BORDER}`, marginBottom: 10 }}>
+                <div style={{ fontSize: 14, color: "#555", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>Punten</div>
+                <div style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, fontWeight: 500 }}>
+                  Imposter gevonden → de groep wint een punt.<br/>
+                  Niet gevonden → de imposter wint een punt.
+                </div>
+              </div>
+            </div>
 
-            const formatNumber = (val) => {
-                if (!val) return '';
-                const num = val.toString().replace(/\D/g, '');
-                return num.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-            };
+            <div style={{ paddingTop: 16 }}>
+              <BigBtn onClick={onClose}>Duidelijk!</BigBtn>
+            </div>
+          </div>
+        </div>
+      );
+    };
 
-            const formatEuro = (amount) => {
-                if (amount === undefined || amount === null) return '0';
-                const value = Number(amount);
-                const hasDecimals = value % 1 !== 0;
-                
-                return value.toLocaleString('nl-BE', {
-                    minimumFractionDigits: hasDecimals ? 2 : 0,
-                    maximumFractionDigits: 2
-                });
-            };
+    // ─── Screens ───────────────────────────────────────────────────────────────
 
-            const handleIncomeChange = (ev) => {
-                const rawValue = ev.target.value.replace(/\./g, '');
-                setIncome(rawValue);
-            };
+    // SetupScreen heeft een eigen inputRef voor autofocus na toevoegen
+    const SetupScreen = ({ players, newPlayer, setNewPlayer, addPlayer, removePlayer, startGame, onOpenPrompts, onOpenInstructions }) => {
+      const inputRef = useRef(null);
 
-            const handleTabChange = (tab) => {
-                setActiveTab(tab);
-                window.scrollTo(0, 0); 
-            };
+      const handleAddPlayer = () => {
+        addPlayer();
+        // Focus het inputveld direct na toevoegen, ook op mobiel
+        setTimeout(() => inputRef.current && inputRef.current.focus(), 0);
+      };
 
-            const filterRef = useRef(null);
-            const [isDown, setIsDown] = useState(false);
-            const [startX, setStartX] = useState(0);
-            const [scrollLeft, setScrollLeft] = useState(0);
+      return (
+        <div style={S.page}>
+          <style>{css}</style>
+          <div style={S.inner}>
+            <div style={{ paddingTop: 20, marginBottom: 40, textAlign: "center" }}>
+              <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: "0.15em", color: ACCENT, textTransform: "uppercase", marginBottom: 8 }}>
+                The party game
+              </div>
+              <div style={{ fontSize: 64, fontWeight: 800, lineHeight: 1.1, textTransform: "uppercase", letterSpacing: "-0.03em" }}>
+                Imposter
+              </div>
+              <div style={{ fontSize: 18, color: MUTED, marginTop: 8, fontWeight: 500 }}>
+                Who's most likely to...
+              </div>
+            </div>
 
-            const handleMouseDown = (ex) => {
-                setIsDown(true);
-                setStartX(ex.pageX - filterRef.current.offsetLeft);
-                setScrollLeft(filterRef.current.scrollLeft);
-            };
-            const handleMouseLeave = () => setIsDown(false);
-            const handleMouseUp = () => setIsDown(false);
-            const handleMouseMove = (ex) => {
-                if (!isDown) return;
-                ex.preventDefault();
-                const x = ex.pageX - filterRef.current.offsetLeft;
-                const walk = (x - startX) * 2;
-                filterRef.current.scrollLeft = scrollLeft - walk;
-            };
+            <Card style={{ marginBottom: 20 }}>
+              <Tag>Spelers ({players.length}/8)</Tag>
+              {players.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 24 }}>
+                  {players.map((p, i) => (
+                    <div key={p} className="btn-active" onClick={() => removePlayer(i)} style={{
+                      display: "flex", alignItems: "center", gap: 8, background: "#2a2a2a",
+                      borderRadius: 100, padding: "10px 16px 10px 20px", fontSize: 18, fontWeight: 600, cursor: "pointer"
+                    }}>
+                      {p}
+                      <div style={{ background: DARK, color: MUTED, borderRadius: "50%", width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 800, paddingBottom: 2 }}>×</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 12 }}>
+                <input
+                  ref={inputRef}
+                  className="input-focus"
+                  value={newPlayer}
+                  onChange={e => {
+                    const val = e.target.value;
+                    const formattedVal = val.charAt(0).toUpperCase() + val.slice(1);
+                    setNewPlayer(formattedVal);
+                  }}
+                  onKeyDown={e => e.key === "Enter" && newPlayer.trim() !== "" && handleAddPlayer()}
+                  placeholder="Speler toevoegen…"
+                  style={{
+                    flex: 1, 
+                    background: "#222", 
+                    border: `2px solid ${BORDER}`, 
+                    borderRadius: 16,
+                    padding: "15px", 
+                    color: TEXT, 
+                    fontSize: 18, 
+                    minWidth: 0, 
+                    fontWeight: 600, 
+                    fontFamily: "'Outfit', sans-serif"
+                  }}
+                />
+                <button 
+                  className={newPlayer.trim() === "" ? "" : "btn-active"} 
+                  onClick={handleAddPlayer} 
+                  disabled={newPlayer.trim() === ""}
+                  style={{
+                    background: ACCENT, 
+                    color: "#111", 
+                    border: "none", 
+                    borderRadius: 16,
+                    padding: "0 20px", 
+                    fontSize: 28, 
+                    fontWeight: 800, 
+                    cursor: newPlayer.trim() === "" ? "default" : "pointer", 
+                    flexShrink: 0,
+                    opacity: newPlayer.trim() === "" ? 0.3 : 1,
+                    filter: newPlayer.trim() === "" ? "grayscale(0.5)" : "none",
+                    transition: "all 0.3s ease"
+                  }}
+                >
+                  +
+                </button>
+              </div>
+            </Card>
 
-            useEffect(() => { lucide.createIcons(); });
-            useEffect(() => { localStorage.setItem('pwa_contracts_v5', JSON.stringify(contracts)); }, [contracts]);
-            useEffect(() => { localStorage.setItem('pwa_income', income); }, [income]);
-            useEffect(() => { localStorage.setItem('pwa_household', householdType); }, [householdType]);
-            useEffect(() => { localStorage.setItem('pwa_groceries', groceries); }, [groceries]);
-            useEffect(() => { localStorage.setItem('pwa_leisure', leisure); }, [leisure]);
-            useEffect(() => { localStorage.setItem('pwa_goal_amount', savingGoalAmount); }, [savingGoalAmount]);
-            useEffect(() => { localStorage.setItem('pwa_goal_months', savingGoalMonths); }, [savingGoalMonths]);
+            <GhostBtn onClick={onOpenPrompts} style={{ marginBottom: 24 }}>📝 Prompts beheren</GhostBtn>
 
-            const getMonthlyCost = (c) => {
-                let cost = parseFloat(c.cost || 0);
-                if (c.isShared && parseInt(c.splitWith) > 1) cost = cost / parseInt(c.splitWith);
-                if (c.frequency === 'yearly') return cost / 12;
-                if (c.frequency === 'quarterly') return cost / 3;
-                if (c.frequency === 'weekly') return (cost * 52) / 12;
-                return cost;
-            };
+            <div style={{ fontSize: 16, color: MUTED, lineHeight: 1.6, fontWeight: 500, padding: "0 10px" }}>
+              <div style={{ marginBottom: 8 }}><strong style={{ color: TEXT }}>1.</strong> 📖 Lees je geheime vraag</div>
+              <div style={{ marginBottom: 8 }}><strong style={{ color: TEXT }}>2.</strong> ✍️ Schrijf een naam op</div>
+              <div style={{ marginBottom: 8 }}><strong style={{ color: TEXT }}>3.</strong> 📢 Toon je antwoord aan de groep</div>
+              <div style={{ marginBottom: 16 }}><strong style={{ color: TEXT }}>4.</strong> 🕵️ Vind de imposter</div>
+              <button
+                className="btn-active"
+                onClick={onOpenInstructions}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#e8c547",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  fontFamily: "'Outfit', sans-serif",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  textDecorationColor: "#333",
+                  padding: 0,
+                  letterSpacing: "0.01em",
+                }}
+              >Meer uitleg →</button>
+            </div>
+          </div>
+          <div style={S.footer}>
+            <BigBtn onClick={startGame} disabled={players.length < 3}>
+              {players.length < 3 ? `Nog ${3 - players.length} speler${3 - players.length !== 1 ? "s" : ""} nodig` : "🚀 Spel starten"}
+            </BigBtn>
+          </div>
+        </div>
+      );
+    };
 
-            const getFullMonthlyCost = (c) => {
-                let cost = parseFloat(c.cost || 0);
-                if (c.frequency === 'yearly') return cost / 12;
-                if (c.frequency === 'quarterly') return cost / 3;
-                if (c.frequency === 'weekly') return (cost * 52) / 12;
-                return cost;
-            };
+    const QuestionTurnScreen = ({ player, round, current, total, onShow }) => (
+      <div style={S.page}>
+        <style>{css}</style>
+        <div style={S.inner}>
+          <div style={S.contentCenter}>
+            <div style={{ fontSize: 14, color: MUTED, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 50 }}>
+              Ronde {round} &nbsp;·&nbsp; {current}/{total}
+            </div>
+            <div style={{ fontSize: 80, marginBottom: 30 }}>👀</div>
+            <div style={{ fontSize: 40, fontWeight: 800, marginBottom: 16, letterSpacing: "-0.02em" }}>
+              Hey <span style={{ color: ACCENT }}>{player}</span>
+            </div>
+            <div style={{ fontSize: 20, color: MUTED, lineHeight: 1.5, fontWeight: 500 }}>
+              Pak de telefoon en lees jouw vraag.<br />De anderen kijken weg.
+            </div>
+          </div>
+        </div>
+        <div style={S.footer}>
+          <BigBtn onClick={onShow}>Toon mijn vraag</BigBtn>
+        </div>
+      </div>
+    );
 
-            const stats = useMemo(() => {
-                const active = contracts.filter(c => c.status === 'active');
-                const totalMonthlyFixed = active.reduce((acc, curr) => acc + getMonthlyCost(curr), 0);
-                const valGroceries = parseFloat(groceries) || 0;
-                const valLeisure = parseFloat(leisure) || 0;
-                const variableTotal = valGroceries + valLeisure;
-                const totalMonthly = totalMonthlyFixed + variableTotal;
-                
-                const subscriptionTotal = active.filter(c => c.type === 'Subscription').reduce((acc, curr) => acc + getMonthlyCost(curr), 0);
-                const expensive = active.length > 0 ? [...active].sort((a, b) => getMonthlyCost(b) - getMonthlyCost(a))[0] : null;
-                const ratio = income > 0 ? (totalMonthly / income) * 100 : 0;
-                const remaining = income ? (parseFloat(income) - totalMonthly) : 0;
+    const ShowQuestionScreen = ({ isImposter, question, isLast, onDone }) => (
+      <div style={{ ...S.page, background: isImposter ? "#1a0b0b" : DARK }}>
+        <style>{css}</style>
+        <div style={S.inner}>
+          <div style={S.contentCenter}>
+            {isImposter && (
+              <div style={{
+                display: "inline-block", background: "#3a1212", border: `2px solid #6a1a1a`,
+                borderRadius: 100, padding: "8px 20px", fontSize: 14, fontWeight: 800,
+                color: RED, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 30, alignSelf: "flex-start"
+              }}>
+              😈 Jij bent de imposter
+              </div>
+            )}
+            <Tag color={isImposter ? RED : ACCENT}>Jouw vraag</Tag>
+            <div style={{ fontSize: 32, fontWeight: 800, lineHeight: 1.4, marginBottom: 40, letterSpacing: "-0.02em" }}>
+              {question}
+            </div>
+            <div style={{ fontSize: 18, color: MUTED, lineHeight: 1.6, fontWeight: 500 }}>
+              Onthoud je vraag goed.<br />Vertel niets aan de anderen. 🤐
+            </div>
+          </div>
+        </div>
+        <div style={S.footer}>
+          <BigBtn onClick={onDone} bg={isImposter ? RED : ACCENT} color={isImposter ? "#fff" : "#111"}>
+            {isLast ? "Iedereen heeft gelezen" : "Verbergen en doorgeven"}
+          </BigBtn>
+        </div>
+      </div>
+    );
 
-                const categoryData = ['Housing', 'Insurance', 'Subscription', 'Utilities', 'Investment', 'Other'].map(type => {
-                    const total = active.filter(c => c.type === type).reduce((acc, curr) => acc + getMonthlyCost(curr), 0);
-                    return { type, total, percentage: totalMonthly > 0 ? (total / totalMonthly) * 100 : 0 };
-                }).filter(cat => cat.total > 0);
+    const WriteScreen = ({ onReady }) => (
+      <div style={S.page}>
+        <style>{css}</style>
+        <div style={S.inner}>
+          <div style={{ ...S.contentCenter, textAlign: "center" }}>
+            <div style={{ fontSize: 80, marginBottom: 30 }}>✍️</div>
+            <div style={{ fontSize: 36, fontWeight: 800, marginBottom: 20, letterSpacing: "-0.02em" }}>Schrijf een naam op</div>
+            <div style={{ fontSize: 20, color: MUTED, marginBottom: 16, lineHeight: 1.6, fontWeight: 500 }}>
+              Schrijf in het geheim op wie volgens jou bij de vraag past.
+            </div>
+            <div style={{ fontSize: 16, color: "#666", fontWeight: 500 }}>
+              Nog niet tonen!
+            </div>
+          </div>
+        </div>
+        <div style={S.footer}>
+          <BigBtn onClick={onReady}>Onthul de namen</BigBtn>
+        </div>
+      </div>
+    );
 
-                if (valGroceries > 0) categoryData.push({ type: 'Groceries', total: valGroceries, percentage: (valGroceries / totalMonthly) * 100 });
-                if (valLeisure > 0) categoryData.push({ type: 'Leisure', total: valLeisure, percentage: (valLeisure / totalMonthly) * 100 });
+    const useCountdownSound = (countdown) => {
+  const audioCtxRef = React.useRef(null);
 
-                return { totalMonthlyFixed, variableTotal, totalMonthly, expensive, subscriptionTotal, count: active.length, ratio, remaining, categoryData, activeContracts: active };
-            }, [contracts, income, groceries, leisure]);
+  React.useEffect(() => {
+    if (countdown < 0) return;
 
-            useEffect(() => {
-                const maxSavings = Math.max(0, stats.remaining);
-                if (investMonthly > maxSavings && maxSavings > 0) {
-                    setInvestMonthly(Math.floor(maxSavings));
-                }
-            }, [stats.remaining]);
+    // Maak AudioContext aan (of hergebruik)
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    const ctx = audioCtxRef.current;
 
-            const investmentResult = useMemo(() => {
-                const r = (investReturn / 100) / 12;
-                const n = investYears * 12;
-                const p = investMonthly;
-                if (r === 0) return p * n;
-                const futureValue = p * ((Math.pow(1 + r, n) - 1) / r);
-                return futureValue;
-            }, [investMonthly, investYears, investReturn]);
+    const playBeep = (frequency, duration, gain = 0.3) => {
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
 
-            // Helper to get gradient style for sliders
-            const getSliderStyle = (value, min, max) => {
-                const percentage = ((value - min) / (max - min)) * 100;
-                return {
-                    background: `linear-gradient(to right, #2563EB 0%, #2563EB ${percentage}%, #E2E8F0 ${percentage}%, #E2E8F0 100%)`
-                };
-            };
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
 
-            const filteredContracts = useMemo(() => {
-                return contracts
-                    .filter(c => (statusFilter === 'active' ? c.status !== 'archived' : c.status === 'archived'))
-                    .filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || (c.provider && c.provider.toLowerCase().includes(searchQuery.toLowerCase())))
-                    .filter(c => activeFilter === 'All' || c.type === activeFilter)
-                    .sort((a, b) => getMonthlyCost(b) - getMonthlyCost(a));
-            }, [contracts, searchQuery, activeFilter, statusFilter]);
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
 
-            const getTypeLabel = (t) => ({ 
-                Housing: 'Wonen', 
-                Insurance: 'Verzekering', 
-                Subscription: 'Abonnement', 
-                Utilities: 'Nutsvoorziening', 
-                Investment: 'Belegging',
-                Other: 'Overig',
-                Groceries: 'Boodschappen',
-                Leisure: 'Vrije tijd'
-            }[t] || t);
+      gainNode.gain.setValueAtTime(gain, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
 
-            const getFrequencyLabel = (f) => ({ weekly: 'Wekelijks', monthly: 'Maandelijks', quarterly: '3-maandelijks', yearly: 'Jaarlijks' }[f] || f);
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + duration);
+    };
 
-            const getIconColorClass = (type) => {
-                switch(type) {
-                    case 'Insurance': return 'bg-red-100 text-red-600'; 
-                    case 'Housing': return 'bg-blue-100 text-blue-600'; 
-                    case 'Subscription': return 'bg-emerald-100 text-emerald-600'; 
-                    case 'Utilities': return 'bg-orange-100 text-orange-600'; 
-                    case 'Investment': return 'bg-yellow-100 text-yellow-600';
-                    default: return 'bg-slate-100 text-slate-600'; 
-                }
-            };
+    if (countdown > 0) {
+      // Korte lage beep voor 3, 2, 1
+      playBeep(440, 0.15, 0.3);
+    } else {
+      // Langere hoge "go!" toon
+      playBeep(880, 0.12, 0.4);
+      setTimeout(() => playBeep(1100, 0.3, 0.35), 120);
+    }
+  }, [countdown]);
+};
 
-            const getCategoryLabelClass = (type) => {
-                const map = { Housing: 'cat-label-Housing', Insurance: 'cat-label-Insurance', Subscription: 'cat-label-Subscription', Utilities: 'cat-label-Utilities', Investment: 'cat-label-Investment', Other: 'cat-label-Other' };
-                return map[type] || 'cat-label-default';
-            };
+const CountdownScreen = ({ countdown }) => {
+  useCountdownSound(countdown);
 
-            const getDotColorClass = (type) => {
-                switch(type) {
-                    case 'Insurance': return 'bg-red-500';
-                    case 'Housing': return 'bg-blue-500';
-                    case 'Subscription': return 'bg-emerald-500';
-                    case 'Utilities': return 'bg-orange-500';
-                    case 'Investment': return 'bg-yellow-400';
-                    case 'Groceries': return 'bg-indigo-400';
-                    case 'Leisure': return 'bg-pink-400';
-                    default: return 'bg-slate-500';
-                }
-            };
+  return (
+    <div style={S.page}>
+      <style>{css}</style>
+      <div style={{ ...S.inner, justifyContent: "center", alignItems: "center", textAlign: "center" }}>
+        <div style={{ fontSize: 18, color: MUTED, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 40 }}>
+          {countdown > 0 ? "Klaar om te tonen?" : "Toon je naam!"}
+        </div>
+        <div style={{
+          fontSize: countdown === 0 ? 140 : 180,
+          fontWeight: 800, lineHeight: 1,
+          color: countdown === 0 ? ACCENT : TEXT,
+          letterSpacing: "-0.04em",
+          textShadow: countdown === 0 ? `0 0 60px ${ACCENT}88` : "none",
+          transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+          transform: countdown === 0 ? "scale(1.2)" : "scale(1)",
+        }}>
+          {countdown === 0 ? "📢" : countdown}
+        </div>
+      </div>
+    </div>
+  );
+};
 
-            const openAddModal = () => {
-                setIsEditing(false);
-                setFormData({ name: '', provider: '', type: '', cost: '', frequency: 'monthly', isShared: false, splitWith: 2 });
-                setIsModalOpen(true);
-            };
+    const ShowNamesScreen = ({ onReveal }) => (
+      <div style={S.page}>
+        <style>{css}</style>
+        <div style={S.inner}>
+          <div style={{ ...S.contentCenter, textAlign: "center" }}>
+            <div style={{ fontSize: 80, marginBottom: 30 }}>👀</div>
+            <div style={{ fontSize: 36, fontWeight: 800, marginBottom: 20, letterSpacing: "-0.02em" }}>Namen tonen!</div>
+            <div style={{ fontSize: 20, color: MUTED, lineHeight: 1.6, fontWeight: 500 }}>
+              Heeft iedereen de namen gezien?<br />Druk dan op de knop om de vraag te onthullen.
+            </div>
+          </div>
+        </div>
+        <div style={S.footer}>
+          <BigBtn onClick={onReveal}>Toon de vraag</BigBtn>
+        </div>
+      </div>
+    );
 
-            return e('div', { className: "min-h-screen bg-[#F8FAFC] pb-24" },
-                e('div', { className: `sticky-header ${isHeaderSticky ? 'visible' : ''}` },
-                    e('div', { className: "sticky-nav-white" },
-                        e('div', { className: "flex items-center justify-between w-full" }, 
-                            e('div', { className: "flex items-center" },
-                                e('img', { src: './Contractlybe.svg', alt: 'Contractly Logo', className: "h-5 w-auto cursor-pointer", onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) })
-                            ),
-                            e('div', { className: "flex items-center gap-2" },
-                                e('div', { className: "text-right leading-none" },
-                                    e('h1', { className: "text-slate-900 text-[14px] font-bold uppercase tracking-wider" }, 
-                                        activeTab === 'list' ? "Uitgaven" : activeTab === 'insights' ? "Inzicht" : activeTab === 'wealth' ? "Investeren" : "Besparen"
-                                    )
-                                ),
-                                e('button', { onClick: openAddModal, className: "w-8 h-8 flex items-center justify-center bg-blue-600 text-white rounded-full transition-transform active:scale-90" }, 
-                                    e(Icon, { name: 'plus', size: 18 })
-                                )
-                            )
-                        )
-                    ),
-                    e('div', { className: "sticky-amount-slim" },
-                        e('p', { className: "text-[10px] font-bold opacity-50 uppercase tracking-widest" }, `Totaal per ${viewMode === 'monthly' ? 'maand' : 'jaar'}`),
-                        e('p', { className: "text-sm font-extrabold" }, `€ ${formatEuro(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12)}`)
-                    )
-                ),
+    const RevealQuestionScreen = ({ normalQuestion, onDone }) => (
+      <div style={S.page}>
+        <style>{css}</style>
+        <div style={S.inner}>
+          <div style={S.contentCenter}>
+            <Tag color={ACCENT}>De vraag was</Tag>
+            <div style={{ fontSize: 32, fontWeight: 800, lineHeight: 1.4, marginBottom: 30, letterSpacing: "-0.02em" }}>
+              {normalQuestion}
+            </div>
+            <Divider />
+            <div style={{ fontSize: 20, color: MUTED, lineHeight: 1.6, fontWeight: 500 }}>
+              Discussieer met de groep en wijs dan <strong style={{color: TEXT}}>tegelijk</strong> naar wie jij denkt dat de imposter is. ☝️
+            </div>
+          </div>
+        </div>
+        <div style={S.footer}>
+          <BigBtn onClick={onDone}>🕵️ Imposter gevonden?</BigBtn>
+        </div>
+      </div>
+    );
 
-                e('header', { className: "px-5 pt-6 pb-8 card-rounded-lg transition-all duration-500" },
-                    e('div', { className: "max-w-md mx-auto" },
-                        e('div', { className: "flex items-center justify-between mb-6" }, 
-                            e('div', { className: "flex items-center" },
-                                e('img', { src: './Contractlybe.svg', alt: 'Contractly Logo', className: "h-5 w-auto cursor-pointer", onClick: () => window.scrollTo({ top: 0, behavior: 'smooth' }) })
-                            ),
-                            e('div', { className: "flex items-center gap-2" },
-                                e('div', { className: "text-right leading-none" },
-                                    e('h1', { className: "text-slate-900 text-[14px] font-bold uppercase tracking-wider" }, 
-                                        activeTab === 'list' ? "Uitgaven" : activeTab === 'insights' ? "Inzicht" : activeTab === 'wealth' ? "Investeren" : "Besparen"
-                                    )
-                                ),
-                                e('button', { onClick: openAddModal, className: "w-8 h-8 flex items-center justify-center bg-blue-600 text-white rounded-full transition-transform active:scale-90" }, 
-                                    e(Icon, { name: 'plus', size: 18 })
-                                )
-                            )
-                        ),
-                        activeTab === 'list'
-                        ? e('div', { ref: heroRef, className: "bg-blue-600 border border-slate-200 card-rounded transition-all duration-500 text-slate-900 relative overflow-hidden p-6" },
-                            e('div', { className: "absolute -right-10 -top-10 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl" }),
-                            e('div', { className: "relative z-10" },
-                                e('div', { className: "flex justify-between items-center" },
-                                    e('p', { className: "total-label text-white opacity-50" }, `Totaal per ${viewMode === 'monthly' ? 'maand' : 'jaar'}`),
-                                    e('button', { onClick: () => setViewMode(viewMode === 'monthly' ? 'yearly' : 'monthly'), className: "bg-white/20 border border-white/10 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all backdrop-blur-sm" }, `Toon per ${viewMode === 'monthly' ? 'jaar' : 'maand'}`)
-                                ),
-                                e('h2', { className: "total-amount transition-all duration-500 text-4xl text-white font-extrabold" }, `€ ${formatEuro(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12)}`),
-                                e('div', { className: "header-stats-container mt-6 border-t border-opacity-10 border-slate-100 pt-4 text-left" },
-                                    e('div', { className: "flex justify-between items-end" },
-                                        e('div', null, 
-                                            e('p', { className: "label-small opacity-50 text-white" }, "Aantal"), 
-                                            e('p', { className: "text-base font-bold text-white" }, `${stats.count} ${stats.count === 1 ? 'uitgave' : 'uitgaven'}`)
-                                        ),
-                                        income > 0 && e('div', { className: "text-right" },
-                                            e('p', { className: "label-small opacity-50 text-white" }, "Overschot"),
-                                            e('p', { className: "text-base font-bold text-white" }, `€ ${formatEuro(viewMode === 'monthly' ? stats.remaining : stats.remaining * 12)}`)
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                        : e('div', { ref: heroRef, className: "bg-blue-600 rounded-xl px-5 py-3 flex items-center justify-between" },
-                            e('p', { className: "text-[10px] font-bold text-white/50 uppercase tracking-widest" }, `Totaal per ${viewMode === 'monthly' ? 'maand' : 'jaar'}`),
-                            e('p', { className: "text-base font-extrabold text-white" }, `€ ${formatEuro(viewMode === 'monthly' ? stats.totalMonthly : stats.totalMonthly * 12)}`)
-                        )
-                    )
-                ),
+    const ResultScreen = ({ imposterName, normalQ, imposterQ, onFound, onNotFound }) => (
+      <div style={S.page}>
+        <style>{css}</style>
+        <div style={{ ...S.inner, paddingTop: 40 }}>
+          <div style={{ fontSize: 14, color: MUTED, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>
+            Uitslag
+          </div>
+          <div style={{ fontSize: 36, fontWeight: 800, marginBottom: 12, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+            Werd de imposter ontmaskerd?
+          </div>
+          <div style={{ fontSize: 20, color: MUTED, marginBottom: 40, fontWeight: 500 }}>
+            De imposter was <strong style={{ color: TEXT, fontWeight: 800 }}>{imposterName}</strong>
+          </div>
 
-                activeTab === 'list' && e('main', { className: "max-w-md mx-auto px-5 -mt-4 animate-sheet" },
-                    e('section', { className: "mb-6" },
-                        e('div', { 
-                            onClick: stats.expensive ? null : openAddModal,
-                            className: `bg-blue-50 border border-blue-100 p-4 rounded-xl flex gap-3 items-start ${!stats.expensive ? 'clickable' : ''}` 
-                        },
-                            e(Icon, { name: 'sparkle', size: 14, className: "text-blue-600 mt-0.5 shrink-0", fill: "currentColor" }),
-                            e('div', { className: "flex-1 text-left" },
-                                e('span', { className: "block text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-1" }, "Samenvatting"),
-                                e('p', { className: "text-base text-slate-700 leading-snug" }, 
-                                    stats.expensive 
-                                    ? e('span', null, 'Je grootste uitgave is ', e('strong', { className: "font-extrabold text-blue-600" }, stats.expensive.name), `, en abonnementen kosten je `, e('strong', { className: "font-extrabold" }, `€ ${formatEuro(stats.subscriptionTotal)}`), ` per maand.`)
-                                    : e('strong', { className: "font-medium text-slate-700" }, "Voeg je eerste maandelijkse uitgave toe.")
-                                )
-                            )
-                        )
-                    ),
-                    e('section', { className: "space-y-4" },
-                        e('div', { 
-                            ref: filterRef,
-                            onMouseDown: handleMouseDown,
-                            onMouseLeave: handleMouseLeave,
-                            onMouseUp: handleMouseUp,
-                            onMouseMove: handleMouseMove,
-                            className: "flex gap-2 overflow-x-auto pb-2 scrollbar-hide grab-scroll active:cursor-grabbing" 
-                        },
-                            ['All', 'Housing', 'Insurance', 'Subscription', 'Utilities', 'Investment', 'Other'].map(t => 
-                                e('button', { key: t, onClick: () => setActiveFilter(t), className: `px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap border shrink-0 transition-all ${activeFilter === t ? 'bg-blue-600 text-[#FFFFFF] border-blue-600' : 'bg-white text-slate-500 border-slate-200'}` }, t === 'All' ? 'Alles' : getTypeLabel(t))
-                            )
-                        ),
-                        e('div', { className: "flex items-center justify-end px-1" },
-                            e('span', null)
-                        )
-                    ),
-                    e('section', { className: "space-y-3 text-left capitalize" },
-                        e('div', { className: "flex items-center justify-between mb-2 px-1" }, 
-                            e('h3', { className: "text-xs font-bold text-slate-400 uppercase tracking-wider" }, "Maandelijkse uitgaven"),
-                            e('button', { onClick: openAddModal, className: "text-blue-600 font-bold text-base flex items-center gap-1" }, e(Icon, { name: 'plus', size: 14 }), "Toevoegen")
-                        ),
-                        
-                        // NEW DESIGN: Grouped List Container
-                        filteredContracts.length > 0 && e('div', { className: "bg-white rounded-xl border border-slate-100 overflow-hidden" },
-                            filteredContracts.map((contract, index) => 
-                                e('div', { 
-                                    key: contract.id, 
-                                    onClick: () => setSelectedContract(contract), 
-                                    className: `p-4 flex items-center gap-4 transition-colors ${index !== filteredContracts.length - 1 ? 'border-b border-slate-100' : ''}` 
-                                },
-                                    // Smaller, rounder icon container
-                                    e('div', { className: `w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${getIconColorClass(contract.type)}` }, 
-                                        e(Icon, { name: contract.type === 'Housing' ? 'home' : contract.type === 'Insurance' ? 'shield' : contract.type === 'Utilities' ? 'zap' : contract.type === 'Investment' ? 'trending-up' : 'credit-card', size: 18 })
-                                    ),
-                                    e('div', { className: "flex-1 min-w-0" },
-                                        e('h4', { className: "font-bold text-[15px] text-slate-900 truncate" }, contract.name),
-                                        e('div', { className: "flex items-center gap-1" },
-                                            contract.isShared && e(Icon, { name: 'users', size: 10, className: "text-blue-600" }),
-                                            e('p', { className: "text-[11px] font-medium text-slate-400" }, contract.provider || getTypeLabel(contract.type))
-                                        )
-                                    ),
-                                    e('div', { className: "text-right shrink-0" },
-                                        e('p', { className: "font-bold text-[15px] text-slate-900" }, `€ ${formatEuro(getMonthlyCost(contract))}`),
-                                        e('p', { className: "text-[10px] text-slate-400 font-bold uppercase" }, "per maand")
-                                    ),
-                                    e(Icon, { name: 'chevron-right', size: 14, className: "text-slate-300" })
-                                )
-                            )
-                        ),
+          <Card style={{ marginBottom: 40, padding: "28px 24px" }}>
+            <Tag>Gewone vraag</Tag>
+            <div style={{ fontSize: 18, lineHeight: 1.5, marginBottom: 20, fontWeight: 600 }}>{normalQ}</div>
+            <Divider />
+            <Tag color={RED}>Imposter vraag</Tag>
+            <div style={{ fontSize: 18, lineHeight: 1.5, color: MUTED, fontWeight: 500 }}>{imposterQ}</div>
+          </Card>
+        </div>
+        <div style={{ ...S.footer, display: "flex", flexDirection: "column", gap: 16 }}>
+          <BigBtn onClick={onFound} bg={GREEN} color="#fff">Ja, de groep wint</BigBtn>
+          <BigBtn onClick={onNotFound} bg={RED} color="#fff">Nee, {imposterName} wint</BigBtn>
+        </div>
+      </div>
+    );
 
-                        contracts.length === 0 && e('div', { className: "text-center py-12 px-8 border-1 border-dashed border-slate-200 rounded-[12px]" },
-                            e('p', { className: "text-slate-400 text-sm mb-4 normal-case" }, "Je hebt nog geen uitgaven toegevoegd."),
-                            e('button', { onClick: openAddModal, className: "bg-blue-600 text-white px-5 py-3 rounded-full text-base font-bold" }, "Eerste uitgave toevoegen")
-                        )
-                    )
-                ),
+    const ScoreboardScreen = ({ players, scores, round, onPlayAgain, onReset }) => {
+      const sorted = [...players].sort((a, b) => (scores[b] || 0) - (scores[a] || 0));
+      const maxScore = Math.max(...players.map(p => scores[p] || 0), 1);
+      const medals = ["🥇", "🥈", "🥉"];
 
-                activeTab === 'insights' && e('main', { className: "max-w-md mx-auto px-5 -mt-4 animate-sheet space-y-4" },
-                    e('section', { className: "bg-white p-6 rounded-[12px] border border-slate-100 space-y-8 text-left" },
-                        e('div', null,
-                            e('h3', { className: "text-xl font-bold text-slate-900 mb-3" }, "Inzicht in je uitgaven"),
-                            e('p', { className: "text-base text-slate-400 leading-relaxed" }, "Vul hier je maandelijks netto-inkomen en geschatte variabele kosten in. Zo zie je welk deel van je loon naar uitgaven gaat en hoeveel je per maand overhoudt.")
-                        ),
-                        e('div', { className: "space-y-4" },
-                            e('div', null,
-                                e('label', { className: "label-small text-slate-400 ml-2 mb-2 block" }, "Maandelijks netto loon"),
-                                e('div', { className: "flex items-center gap-3 bg-slate-50 p-4 rounded-xl border-2 border-transparent focus-within:border-blue-500/20 focus-within:bg-white transition-all" },
-                                    e('span', { className: "text-xl font-bold text-slate-300" }, "€ "),
-                                    e('input', { 
-                                        type: 'text', 
-                                        inputMode: 'numeric',
-                                        placeholder: "0", 
-                                        className: "w-full bg-transparent border-none text-xl font-bold focus:ring-0 text-slate-900",
-                                        value: formatNumber(income),
-                                        onChange: handleIncomeChange
-                                    })
-                                )
-                            ),
-                            e('div', { className: "grid grid-cols-2 gap-4" },
-                                e('div', null,
-                                    e('label', { className: "label-small text-slate-400 ml-2 mb-2 block" }, "Boodschappen"),
-                                    e('div', { className: "flex items-center gap-2 bg-slate-50 p-4 rounded-xl" },
-                                        e('span', { className: "text-lg font-bold text-slate-300" }, "€ "),
-                                        e('input', { 
-                                            type: 'text', 
-                                            inputMode: 'numeric',
-                                            className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", 
-                                            value: formatNumber(groceries), 
-                                            onChange: ev => setGroceries(ev.target.value.replace(/\./g, '')), 
-                                            placeholder: "0" 
-                                        })
-                                    )
-                                ),
-                                e('div', null,
-                                    e('label', { className: "label-small text-slate-400 ml-2 mb-2 block" }, "Vrije tijd"),
-                                    e('div', { className: "flex items-center gap-2 bg-slate-50 p-4 rounded-xl" },
-                                        e('span', { className: "text-lg font-bold text-slate-300" }, "€ "),
-                                        e('input', { 
-                                            type: 'text', 
-                                            inputMode: 'numeric',
-                                            className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", 
-                                            value: formatNumber(leisure), 
-                                            onChange: ev => setLeisure(ev.target.value.replace(/\./g, '')), 
-                                            placeholder: "0" 
-                                        })
-                                    )
-                                )
-                            )
-                        ),
-                        income > 0 && e('div', { className: "pt-4 border-t border-slate-50" },
-                            e('div', { className: "flex justify-between items-end mb-4" },
-                                e('div', null,
-                                    e('p', { className: "label-small text-slate-400" }, "Totale uitgaven"),
-                                    e('p', { className: "text-2xl font-bold text-slate-900" }, `${stats.ratio.toFixed(1)}%`)
-                                ),
-                                e('div', { className: "text-right" },
-                                    e('p', { className: "label-small text-slate-400" }, "Overschot"),
-                                    e('p', { className: `text-2xl font-bold ${stats.remaining < 0 ? 'text-red-500' : 'text-emerald-600'}` }, `€ ${formatEuro(stats.remaining)}`)
-                                )
-                            ),
-                            e('div', { className: "w-full h-4 bg-slate-100 rounded-full overflow-hidden" },
-                                e('div', { 
-                                    className: `h-full transition-all duration-1000 ${
-                                        stats.ratio > 80 ? 'bg-red-500' : 
-                                        stats.ratio > 50 ? 'bg-orange-400' : 
-                                        'bg-emerald-500' 
-                                    }`,
-                                    style: { width: `${Math.min(stats.ratio, 100)}%` }
-                                })
-                            )
-                        ),
-                        stats.categoryData.length > 0 && e('div', { className: "mt-8 space-y-4" },
-                            e('h4', { className: "label-small text-slate-400 border-b border-slate-100 pb-2" }, "Kosten per categorie"),
-                            stats.categoryData.map(cat => e('div', { key: cat.type, className: "flex justify-between items-center" },
-                                e('div', { className: "flex items-center gap-2" },
-                                    e('div', { className: `w-2 h-2 rounded-full ${getDotColorClass(cat.type)}` }),
-                                    e('span', { className: "text-base font-bold text-slate-600" }, getTypeLabel(cat.type))
-                                ),
-                                e('div', { className: "text-right" },
-                                    e('span', { className: "text-base font-bold text-slate-900" }, `€ ${formatEuro(cat.total)}`),
-                                    e('span', { className: "text-[10px] text-slate-400 ml-2 font-bold" }, `${cat.percentage.toFixed(1)}%`)
-                                )
-                            ))
-                        )
-                    ),
+      return (
+        <div style={S.page}>
+          <style>{css}</style>
+          <div style={S.inner}>
+            <div style={{ paddingTop: 24, marginBottom: 36 }}>
+              <div style={{ fontSize: 14, color: MUTED, fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 0 }}>
+                {round} ronde{round !== 1 ? "s" : ""} gespeeld
+              </div>
+              <div style={{ fontSize: 44, fontWeight: 800, letterSpacing: "-0.03em" }}>Scorebord</div>
+            </div>
 
-                    income > 0 && e('section', { className: "bg-white p-6 rounded-[12px] border border-slate-100 text-left" },
-                        e('div', { className: "mb-6" },
-                            e('h3', { className: "text-xl font-bold text-slate-900 mb-2" }, "De 50-30-20-regel"),
-                            e('p', { className: "text-base text-slate-400 leading-relaxed" }, "Breng structuur in je financiën met een heldere verdeling tussen behoeften, wensen en sparen/beleggen.")
-                        ),
-                        e('div', { className: "space-y-6" },
-                            (() => {
-                                const needsTerms = ['internet', 'wifi', 'telenet', 'proximus', 'orange', 'mobiel', 'telefoon', 'gsm', 'base', 'mobile', 'telecom'];
-                                
-                                const needs = stats.activeContracts.filter(c => 
-                                    ['Housing', 'Utilities', 'Insurance'].includes(c.type) || 
-                                    (c.type === 'Subscription' && needsTerms.some(term => c.name.toLowerCase().includes(term)))
-                                ).reduce((acc, curr) => acc + getMonthlyCost(curr), 0) + (parseFloat(groceries) || 0);
+            <Card style={{ marginBottom: 40, padding: "16px 24px" }}>
+              {sorted.map((name, i) => {
+                const score = scores[name] || 0;
+                return (
+                  <div key={name}>
+                    {i > 0 && <div style={{ height: 2, background: BORDER, margin: "16px 0", borderRadius: 2 }} />}
+                    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                      <span style={{ fontSize: 28, width: 36, textAlign: "center" }}>{medals[i] || <span style={{fontSize: 18, color: MUTED, fontWeight: 800}}>{i+1}</span>}</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>{name}</div>
+                        <div style={{ background: "#2a2a2a", borderRadius: 100, height: 8, overflow: "hidden" }}>
+                          <div style={{ height: "100%", borderRadius: 100, width: `${(score / maxScore) * 100}%`, background: i === 0 ? ACCENT : "#666", transition: "width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)" }} />
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 28, fontWeight: 800, color: i === 0 ? ACCENT : TEXT, minWidth: 40, textAlign: "right" }}>{score}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </Card>
+          </div>
+          <div style={{ ...S.footer, display: "flex", flexDirection: "column", gap: 16 }}>
+            <BigBtn onClick={onPlayAgain}>🚀 Nog een ronde</BigBtn>
+            <GhostBtn onClick={onReset}>Terug naar hoofdmenu</GhostBtn>
+          </div>
+        </div>
+      );
+    };
 
-                                const wants = stats.activeContracts.filter(c => 
-                                    (c.type === 'Subscription' && !needsTerms.some(term => c.name.toLowerCase().includes(term))) || 
-                                    ['Other'].includes(c.type)
-                                ).reduce((acc, curr) => acc + getMonthlyCost(curr), 0) + (parseFloat(leisure) || 0);
+    // ─── Main ──────────────────────────────────────────────────────────────────
 
-                                const savings = (stats.categoryData.find(c => c.type === 'Investment')?.total || 0) + Math.max(0, stats.remaining);
-                                
-                                const needsPct = (needs / income) * 100;
-                                const wantsPct = (wants / income) * 100;
-                                const savingsPct = (savings / income) * 100;
+    function ImposterGame() {
+      const [phase, setPhase] = useState(PHASES.SETUP);
+      const [players, setPlayers] = useState(() => {
+        try { return JSON.parse(localStorage.getItem("imposter_players")) || []; } catch { return []; }
+      });
+      const [newPlayer, setNewPlayer] = useState("");
+      const [round, setRound] = useState(0);
+      const [currentPlayerIdx, setCurrentPlayerIdx] = useState(0);
+      const [imposterIdx, setImposterIdx] = useState(null);
+      
+      const [promptPool, setPromptPool] = useState(INITIAL_PROMPTS);
+      const [customQuestions, setCustomQuestions] = useState(() => {
+        try { return JSON.parse(localStorage.getItem("imposter_custom_questions")) || []; } catch { return []; }
+      });
 
-                                return e('div', { className: "space-y-6" },
-                                    e('div', { className: "h-6 w-full bg-slate-100 rounded-full overflow-hidden flex" },
-                                        e('div', { className: "h-full bg-blue-600 transition-all duration-1000", style: { width: `${Math.min(needsPct, 100)}%` } }),
-                                        e('div', { className: "h-full bg-emerald-500 transition-all duration-1000", style: { width: `${Math.min(wantsPct, Math.max(0, 100 - needsPct))}%` } }),
-                                        e('div', { className: "h-full bg-yellow-500 transition-all duration-1000", style: { width: `${Math.max(0, 100 - needsPct - wantsPct)}%` } })
-                                    ),
-                                    e('div', { className: "grid grid-cols-3 gap-2" },
-                                        e('div', null, 
-                                            e('p', { className: "text-[11px] font-bold text-blue-600 uppercase" }, "Behoeften"), 
-                                            e('p', { className: "text-sm font-black" }, 
-                                                needsPct.toFixed(0) + "%", 
-                                                e('span', { className: "text-slate-400 font-medium text-[10px] ml-1" }, "/ 50%")
-                                            )
-                                        ),
-                                        e('div', null, 
-                                            e('p', { className: "text-[11px] font-bold text-emerald-500 uppercase" }, "Wensen"), 
-                                            e('p', { className: "text-sm font-black" }, 
-                                                wantsPct.toFixed(0) + "%", 
-                                                e('span', { className: "text-slate-400 font-medium text-[10px] ml-1" }, "/ 30%")
-                                            )
-                                        ),
-                                        e('div', null, 
-                                            e('p', { className: "text-[11px] font-bold text-yellow-500 uppercase" }, "Sparen"), 
-                                            e('p', { className: "text-sm font-black" }, 
-                                                savingsPct.toFixed(0) + "%", 
-                                                e('span', { className: "text-slate-400 font-medium text-[10px] ml-1" }, "/ 20%")
-                                            )
-                                        )
-                                    ),
-                                    e('div', { className: "space-y-2" },
-                                        needsPct > 55 && e('div', { className: "bg-orange-50 border border-orange-100 p-3 rounded-xl flex gap-2 items-center" }, 
-                                            e(Icon, { name: 'alert-triangle', size: 14, className: "text-orange-500" }),
-                                            e('p', { className: "text-[12px] font-bold text-orange-700" }, "Je behoeften zijn iets te hoog vergeleken met je loon.")
-                                        ),
-                                        wantsPct > 35 && e('div', { className: "bg-orange-50 border border-orange-100 p-3 rounded-xl flex gap-2 items-center" }, 
-                                            e(Icon, { name: 'alert-triangle', size: 14, className: "text-orange-500" }),
-                                            e('p', { className: "text-[12px] font-bold text-orange-700" }, "Je geeft veel uit aan wensen en abonnementen.")
-                                        ),
-                                        needsPct <= 55 && wantsPct <= 35 && savingsPct >= 18 && e('div', { className: "bg-emerald-50 border border-emerald-100 p-3 rounded-xl flex gap-2 items-center" }, 
-                                            e(Icon, { name: 'check-circle', size: 14, className: "text-emerald-500" }),
-                                            e('p', { className: "text-[12px] font-bold text-emerald-700" }, "Je budgettering zit goed op schema!")
-                                        ),
-                                        savingsPct < 15 && e('div', { className: "bg-blue-50 border border-blue-100 p-3 rounded-xl flex gap-2 items-center" }, 
-                                            e(Icon, { name: 'info', size: 14, className: "text-blue-500" }),
-                                            e('p', { className: "text-[12px] font-bold text-blue-700" }, "Probeer toe te werken naar 20% sparen/beleggen.")
-                                        )
-                                    )
-                                );
-                            })()
-                        )
-                    ),
+      // availablePrompts: vragen die nog niet zijn gebruikt deze cyclus
+      const [availablePrompts, setAvailablePrompts] = useState(() => {
+        try { return JSON.parse(localStorage.getItem("imposter_available_prompts")) || [...INITIAL_PROMPTS]; } catch { return [...INITIAL_PROMPTS]; }
+      });
+      
+      const [currentNormalQ, setCurrentNormalQ] = useState("");
+      const [currentImposterQ, setCurrentImposterQ] = useState("");
+      
+      const [countdown, setCountdown] = useState(3);
+      const [scores, setScores] = useState(() => {
+        try { return JSON.parse(localStorage.getItem("imposter_scores")) || {}; } catch { return {}; }
+      });
+      const [showPrompts, setShowPrompts] = useState(false);
+      const [showInstructions, setShowInstructions] = useState(false);
+      const countdownRef = useRef(null);
 
-                    e('section', { className: "bg-white p-6 rounded-[12px] border border-slate-100 text-left" },
-                        e('div', { className: "mb-6" },
-                            e('h4', { className: "text-xl font-bold mb-3 text-slate-900" }, "Mijn uitgaven in beeld"),
-                            e('p', { className: "text-base text-slate-400 leading-relaxed mb-6" }, 
-                                householdType === 'single' 
-                                ? e('span', null, "Vergelijk jouw budgettering met dat van een gemiddelde ", e('span', null, "alleenstaande"), " Vlaming.") 
-                                : e('span', null, "Vergelijk jouw budgettering met de gemiddelde individuele uitgaven van een ", e('span', null, "samenwonende"), " Vlaming.")
-                            ),
-                            e('label', { className: "label-small text-slate-400 ml-1 mb-2 block" }, "Mijn huishouden"),
-                            e('div', { className: "flex bg-slate-100 p-1 rounded-xl mb-6" },
-                                [
-                                    { id: 'single', label: 'Alleenstaand' },
-                                    { id: 'couple', label: 'Samenwonend' }
-                                ].map(h => e('button', { 
-                                    key: h.id, 
-                                    onClick: () => setHouseholdType(h.id),
-                                    className: `flex-1 py-4 rounded-xl label-small font-bold transition-all uppercase ${householdType === h.id ? 'bg-[#FFFFFF] text-blue-600' : 'text-slate-500'}`
-                                }, h.label))
-                            )
-                        ),
-                        e('div', { className: "space-y-6" },
-                            [
-                                { label: 'Wonen', key: 'Housing', color: 'bg-blue-500' },
-                                { label: 'Energie & Water', key: 'Utilities', color: 'bg-orange-400' },
-                                { label: 'Verzekeringen', key: 'Insurance', color: 'bg-red-500' },
-                                { label: 'Abonnementen', key: 'Subscription', color: 'bg-emerald-500' },
-                                { label: 'Beleggingen', key: 'Investment', color: 'bg-yellow-300' }
-                            ].map(item => {
-                                const avg = item.key === 'Investment' 
-                                    ? (parseFloat(income) * 0.10 || 100)
-                                    : benchmarks[householdType][item.key];
-                                    
-                                const user = stats.categoryData.find(c => c.type === item.key)?.total || 0;
-                                const maxVal = Math.max(avg, user, 1);
-                                const userPct = (user / maxVal) * 100;
-                                const avgPct = (avg / maxVal) * 100;
+      // ── LocalStorage persistentie ──────────────────────────────────────────
+      useEffect(() => {
+        try { localStorage.setItem("imposter_custom_questions", JSON.stringify(customQuestions)); } catch {}
+      }, [customQuestions]);
 
-                                return e('div', { key: item.label, className: "space-y-2" },
-                                    e('div', { className: "flex justify-between items-end" },
-                                        e('p', { className: "text-[11px] font-bold text-slate-500 uppercase tracking-wider" }, item.label),
-                                        e('p', { className: "text-[11px] font-bold text-slate-900" }, `€ ${formatEuro(user)} `, e('span', { className: "font-normal text-slate-400" }, `/ € ${formatEuro(avg)}`))
-                                    ),
-                                    e('div', { className: "relative h-3 w-full bg-slate-50 rounded-full overflow-hidden" },
-                                        e('div', { 
-                                            className: "absolute top-0 bottom-0 bg-slate-200 z-0 transition-all duration-1000 opacity-60",
-                                            style: { width: `${avgPct}%` }
-                                        }),
-                                        e('div', { 
-                                            className: `absolute top-0 bottom-0 ${item.color} z-10 rounded-full transition-all duration-1000`,
-                                            style: { width: `${userPct}%` }
-                                        })
-                                    )
-                                );
-                            })
-                        ),
-                        e('div', { className: "mt-6 pt-6 border-t border-slate-50 flex justify-between" },
-                            e('div', { className: "flex items-center gap-2" },
-                                e('div', { className: "w-3 h-1.5 rounded-full bg-slate-200" }),
-                                e('span', { className: "text-[10px] font-bold text-slate-400 uppercase tracking-wider" }, "Vlaams gem.")
-                            ),
-                            e('div', { className: "flex items-center gap-2" },
-                                e('div', { className: "w-3 h-1.5 rounded-full bg-blue-600" }),
-                                e('span', { className: "text-[10px] font-bold text-slate-400 uppercase tracking-wider" }, "Jouw aandeel")
-                            )
-                        )
-                    ),
+      useEffect(() => {
+        try { localStorage.setItem("imposter_players", JSON.stringify(players)); } catch {}
+      }, [players]);
 
-                    stats.totalMonthly > 0 && e('section', { className: "bg-blue-50 border border-blue-100 p-6 rounded-[12px] text-slate-700 text-left" },
-                        e('div', { className: "flex items-center gap-2 mb-2" },
-                            e(Icon, { name: 'trending-down', size: 16, className: "text-blue-600" }),
-                            e('p', { className: "label-small text-blue-600" }, "Besparingspotentieel")
-                        ),
-                        e('h4', { className: "text-xl font-bold mb-3 text-slate-900" }, "Bespaar gemiddeld 15%"),
-                        e('p', { className: "text-base text-slate-500 leading-relaxed mb-4" }, "Wist je dat de meeste Belgen jaarlijks tot € 500 kunnen besparen door simpelweg te vergelijken? Doe ook jouw jaarlijkse check!"),
-                        e('button', { onClick: () => handleTabChange('savings'), className: "bg-blue-600 hover:bg-blue-700 transition-colors text-white px-5 py-3 rounded-full font-bold text-base" }, "Ontdek hoe")
-                    ),
-                    e('div', { className: "flex items-center justify-center gap-2 py-4" },
-                        e(Icon, { name: 'lock', size: 14, className: "text-slate-400" }),
-                        e('p', { className: "text-[12px] font-medium text-slate-400" }, "Je gegevens worden enkel op dit toestel opgeslagen.")
-                    )
-                ),
+      useEffect(() => {
+        try { localStorage.setItem("imposter_scores", JSON.stringify(scores)); } catch {}
+      }, [scores]);
 
-                activeTab === 'wealth' && e('main', { className: "max-w-md mx-auto px-5 -mt-4 animate-sheet space-y-4" },
-                    e('section', { className: "bg-white p-6 rounded-[12px] border border-slate-100 text-left" },
-                        // Introductie tekst
-                        e('div', { className: "mb-6" },
-                            e('h3', { className: "text-xl font-bold text-slate-900 mb-3" }, "Investeer in je toekomst"),
-                            e('p', { className: "text-base text-slate-400 leading-relaxed" }, "Heb je je spaardoelen bereikt? Kijk dan eens wat je kunt opbouwen door je overschot slim maandelijks te investeren.")
-                        ),
+      useEffect(() => {
+        try { localStorage.setItem("imposter_available_prompts", JSON.stringify(availablePrompts)); } catch {}
+      }, [availablePrompts]);
 
-                        // Nieuwe Sectie met lijntje en icoon (vergelijkbaar met spaardoel)
-                        e('div', { className: "pt-6 border-t border-slate-50" },
-                            e('div', { className: "flex items-center gap-2 mb-6" },
-                                e(Icon, { name: 'badge-euro', size: 18, className: "text-blue-600" }),
-                                e('h4', { className: "text-[16px] font-bold text-slate-900" }, "Investering simuleren")
-                            ),
+      // ── Spel starten ───────────────────────────────────────────────────────
+      const startGame = (p) => {
+        const pl = p || players;
+        if (pl.length < 3) return;
+        
+        setImposterIdx(Math.floor(Math.random() * pl.length));
 
-                            // Overschot en Inleg indicators
-                            e('div', { className: "flex justify-between items-end mb-4" },
-                                e('div', null,
-                                    e('p', { className: "label-small text-slate-400" }, "Overschot"),
-                                    e('p', { className: "text-2xl font-bold text-slate-900" }, `€ ${formatEuro(Math.max(0, stats.remaining) - investMonthly)}`)
-                                ),
-                                e('div', { className: "text-right" },
-                                    e('p', { className: "label-small text-slate-400" }, "Totale eigen inleg"),
-                                    e('p', { className: "text-2xl font-bold text-slate-900" }, `€ ${formatEuro(investMonthly * investYears * 12)}`)
-                                )
-                            ),
-                            e('div', { className: "w-full h-4 bg-slate-100 rounded-full overflow-hidden flex mb-4" },
-                                e('div', { 
-                                    className: "h-full bg-yellow-300 transition-all duration-300",
-                                    style: { width: `${(investMonthly / Math.max(1, stats.remaining)) * 100}%` }
-                                }),
-                                e('div', { 
-                                    className: "h-full bg-slate-200 transition-all duration-300",
-                                    style: { width: `${100 - (investMonthly / Math.max(1, stats.remaining)) * 100}%` }
-                                })
-                            )
-                        ),
-                        e('div', { className: "space-y-8 pt-4" },
-                            e('div', null,
-                                e('div', { className: "flex justify-between mb-2" },
-                                    e('label', { className: "label-small text-slate-500" }, "Inleg per maand"),
-                                    e('span', { className: "text-base font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg" }, `€ ${formatEuro(investMonthly)}`)
-                                ),
-                                e('input', { 
-                                    type: 'range', 
-                                    min: 0, 
-                                    max: Math.max(0, Math.floor(stats.remaining)) || 1000, 
-                                    step: 10, 
-                                    value: investMonthly, 
-                                    style: getSliderStyle(investMonthly, 0, Math.max(0, Math.floor(stats.remaining)) || 1000),
-                                    onChange: ev => setInvestMonthly(parseInt(ev.target.value)) 
-                                }),
-                                e('div', { className: "flex justify-between mt-1" },
-                                    e('span', { className: "text-[10px] text-slate-300 font-bold" }, "€ 0"),
-                                    e('span', { className: "text-[10px] text-slate-300 font-bold" }, `€ ${formatEuro(Math.max(0, Math.floor(stats.remaining)))}`)
-                                )
-                            ),
-                            e('div', null,
-                                e('div', { className: "flex justify-between mb-2" },
-                                    e('label', { className: "label-small text-slate-500" }, "Termijn"),
-                                    e('span', { className: "text-base font-bold text-slate-700 bg-slate-50 px-3 py-1 rounded-lg" }, `${investYears} jaar`)
-                                ),
-                                e('input', { 
-                                    type: 'range', 
-                                    min: 1, 
-                                    max: 40, 
-                                    step: 1, 
-                                    value: investYears, 
-                                    style: getSliderStyle(investYears, 1, 40),
-                                    onChange: ev => setInvestYears(parseInt(ev.target.value)) 
-                                }),
-                                e('div', { className: "flex justify-between mt-1" },
-                                    e('span', { className: "text-[10px] text-slate-300 font-bold" }, "1 jaar"),
-                                    e('span', { className: "text-[10px] text-slate-300 font-bold" }, "40 jaar")
-                                )
-                            )
-                        ),
-                        e('div', { className: "pt-6 border-t border-slate-100 mt-4" },
-                            e('div', { className: "flex items-center justify-between mb-6" },
-                                e('div', null,
-                                    e('p', { className: "label-small text-slate-400 mb-1" }, "Geschat eindkapitaal"),
-                                    e('h4', { className: "text-3xl font-black text-emerald-600" }, `€ ${formatEuro(investmentResult)}`)
-                                )
-                            ),
-                            e('p', { className: "text-[11px] text-slate-400 leading-tight italic" }, 
-                                "Het gemiddelde rendement van een wereldwijd gespreide ETF-portefeuille bedraagt historisch ongeveer 7% per jaar. Let op: resultaten uit het verleden bieden geen garantie voor de toekomst. Beleggen brengt risico's met zich mee."
-                            )
-                        )
-                    ),
-                    e('section', { className: "space-y-3 pt-4" },
-                        e('h4', { className: "text-xl font-bold text-slate-900 ml-1 mb-3 text-left" }, "Beleggingstools"),
-                        [
-                            { title: "Curvo", desc: "De Belgische app voor passief beleggen in indexfondsen. Ideaal voor wie automatisch wil beleggen zonder zorgen.", link: "https://curvo.eu/nl-be", recommended: true, borderColor: "border-green-100" }, 
-                            { title: "Saxo", desc: "Een betrouwbaar platform voor de actieve en passieve belegger met een zeer ruim aanbod aan aandelen, obligaties en ETF's.", link: "https://www.home.saxo/nl-be/products/autoinvest", borderColor: "border-blue-100" }, 
-                            { title: "MeDirect", desc: "De specialist in sparen en beleggen met scherpe tarieven en een ruim aanbod aan fondsen en trackers.", link: "https://www.medirect.be/nl-be/investeer-zelf/etfs/search/", borderColor: "border-emerald-100" }, 
-                            { title: "Re=Bel", desc: "Beleggen met een missie. Toegankelijk platform direct in je Belfius app met focus op duurzaamheid.", link: "https://www.belfius.be/retail/nl/producten/sparen-beleggen/rebel/index.aspx", borderColor: "border-red-100" }, 
-                            { title: "Bolero", desc: "Het beleggingsplatform van KBC. Zeer betrouwbaar, gebruiksvriendelijk en met sterke analyses.", link: "https://www.bolero.be/", borderColor: "border-purple-00" } 
-                        ].map((tool, i) => e('div', { 
-                            key: i, 
-                            className: `bg-white p-5 rounded-[12px] border ${tool.borderColor} flex flex-col gap-3 text-left relative` 
-                        },
-                            tool.recommended && e('div', { className: "absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase" }, "Aanrader"),
-                            e('p', { className: "text-[16px] font-bold text-slate-900" }, tool.title),
-                            e('p', { className: "text-base text-slate-400 leading-relaxed font-medium" }, tool.desc),
-                            e('a', { href: tool.link, target: "_blank", className: "text-blue-600 font-bold flex items-center gap-1 text-sm" }, "Website bezoeken", e(Icon, { name: 'external-link', size: 14 }))
-                        ))
-                    )
-                ),
+        // Gebruik availablePrompts; reset als er te weinig over zijn
+        setAvailablePrompts(prev => {
+          const pool = prev.length >= 2 ? prev : [...promptPool];
+          const shuffled = [...pool].sort(() => 0.5 - Math.random());
+          const nQ = shuffled[0];
+          const iQ = shuffled[1];
+          setCurrentNormalQ(nQ);
+          setCurrentImposterQ(iQ);
+          // Verwijder de gebruikte vragen uit de beschikbare pool
+          return shuffled.slice(2);
+        });
+        
+        setCurrentPlayerIdx(0);
+        setRound(r => r + 1);
+        setPhase(PHASES.QUESTION_TURN);
+      };
 
-                activeTab === 'savings' && e('main', { className: "max-w-md mx-auto px-5 -mt-4 animate-sheet space-y-4" },
-                    e('section', { className: "bg-white p-6 rounded-[12px] border border-slate-100 text-left" },
-                        e('h3', { className: "text-xl font-bold text-slate-900 mb-3" }, "Slim sparen en besparen"),
-                        e('p', { className: "text-base text-slate-400 leading-relaxed mb-6" }, "Bepaal je spaardoel en gebruik onderstaande onafhankelijke tools om te controleren of je nog steeds de beste prijs betaalt. Bekijk, vergelijk en stap over in 1-2-3."),
-                        
-                        e('div', { className: "pt-6 border-t border-slate-50" },
-                            e('div', { className: "flex items-center gap-2 mb-4" },
-                                e(Icon, { name: 'target', size: 18, className: "text-blue-600" }),
-                                e('h4', { className: "text-[16px] font-bold text-slate-900" }, "Spaardoel instellen")
-                            ),
-                            e('div', { className: "space-y-4" },
-                                e('div', { className: "grid grid-cols-2 gap-3" },
-                                    e('div', null,
-                                        e('label', { className: "label-small text-slate-400 ml-1 mb-2 block" }, "Doelbedrag"),
-                                        e('div', { className: "flex items-center gap-2 bg-slate-50 p-3 rounded-xl" },
-                                            e('span', { className: "text-lg font-bold text-slate-300" }, "€"),
-                                            e('input', { 
-                                                type: 'text',
-                                                inputMode: 'numeric',
-                                                className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", 
-                                                value: formatNumber(savingGoalAmount), 
-                                                onChange: ev => setSavingGoalAmount(ev.target.value.replace(/\./g, '')), 
-                                                placeholder: "" 
-                                            })
-                                        )
-                                    ),
-                                    e('div', null,
-                                        e('label', { className: "label-small text-slate-400 ml-1 mb-2 block" }, "Termijn (maanden)"),
-                                        e('div', { className: "flex items-center gap-2 bg-slate-50 p-3 rounded-xl" },
-                                            e(Icon, { name: 'calendar', size: 16, className: "text-slate-300 shrink-0" }),
-                                            e('input', { 
-                                                type: 'text', 
-                                                inputMode: 'numeric',
-                                                className: "w-full bg-transparent border-none text-lg font-bold focus:ring-0 text-slate-900", 
-                                                value: formatNumber(savingGoalMonths), 
-                                                onChange: ev => setSavingGoalMonths(ev.target.value.replace(/\./g, '')), 
-                                                placeholder: "" 
-                                            })
-                                        )
-                                    )
-                                ),
-                                savingGoalAmount > 0 && savingGoalMonths > 0 && e('div', { className: "mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100" },
-                                    e('div', { className: "flex justify-between items-center mb-3" },
-                                        e('p', { className: "text-sm font-bold text-slate-600" }, "Nodig per maand:"),
-                                        e('p', { className: "text-xl font-black text-blue-600" }, `€ ${formatEuro(parseFloat(savingGoalAmount) / parseInt(savingGoalMonths))}`)
-                                    ),
-                                    e('button', { 
-                                        onClick: () => handleTabChange('wealth'),
-                                        className: "w-full bg-blue-600 text-white py-3 rounded-full font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all hover:bg-blue-700"
-                                    }, 
-                                        e(Icon, { name: 'trending-up', size: 14 }),
-                                        "Sneller bereiken met beleggen?"
-                                    )
-                                )
-                            )
-                        )
-                    ),
+      const addCustomPrompt = (text) => {
+        setCustomQuestions(prev => [...prev, text]);
+        setPromptPool(prev => [...prev, text]);
+        setAvailablePrompts(prev => [...prev, text]);
+      };
 
-                    e('div', { className: "pt-4 space-y-3" },
-                        e('h4', { className: "text-xl font-bold text-slate-900 ml-1 mb-3" }, "Besparingstools"),
-                        [
-                            { 
-                                id: 'main-tool',
-                                icon: 'search-check', 
-                                border: 'border-blue-100', 
-                                color: 'text-blue-600', 
-                                bg: 'bg-blue-50', 
-                                btnColor: 'bg-blue-600 text-white',
-                                title: 'Mijnvergelijker.be', 
-                                text: 'De meest complete tool in Vlaanderen voor álle vaste kosten. Vergelijk direct energie, verzekeringen, telecom en meer op één plek.',
-                                link: 'https://www.mijnvergelijker.be/',
-                                label: 'Start nu met vergelijken',
-                                isRecommended: true
-                            },
-                            { 
-                                id: 'energie-alt',
-                                icon: 'zap', 
-                                border: 'border-orange-100', 
-                                color: 'text-orange-500', 
-                                bg: 'bg-orange-50', 
-                                btnColor: 'bg-orange-500 text-white',
-                                title: 'Energie vergelijken', 
-                                text: 'De officiële tool van de VREG. Handig voor een 100% objectieve check van enkel je energiecontracten (gas & elektriciteit).',
-                                link: 'https://vtest.vreg.be/',
-                                label: 'Doe de V-TEST',
-                                isRecommended: false
-                            }
-                        ].map((tip, idx) => 
-                            e('div', { 
-                                key: idx, 
-                                className: `tip-card p-6 rounded-[12px] ${tip.border} flex flex-col gap-4 text-left relative overflow-hidden` 
-                            },
-                                tip.isRecommended && e('div', { className: "absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase" }, "Aanrader"),
-                                e('div', { className: "flex items-center gap-3" },
-                                    e('div', { className: `${tip.bg} ${tip.color} w-10 h-10 rounded-full flex items-center justify-center shrink-0` }, 
-                                    e(Icon, { name: tip.icon, size: 20 })
-                                ),
-                                    e('p', { className: "text-[16px] font-bold text-slate-900" }, tip.title)
-                                ),
-                                e('p', { className: "text-base text-slate-400 leading-relaxed font-medium" }, tip.text),
-                                e('a', { 
-                                    href: tip.link, 
-                                    target: "_blank", 
-                                    className: `w-full ${tip.btnColor} py-3 px-5 rounded-full font-bold text-base flex items-center justify-center gap-2 transition-all active:scale-95` 
-                                }, tip.label, e(Icon, { name: 'external-link', size: 14 }))
-                            )
-                        )
-                    ),
-                    
-                    e('div', { className: "pt-4 space-y-3" },
-                        e('h4', { className: "text-xl font-bold text-slate-900 ml-1 mb-3" }, "Handige bespaartips"),
-                        [
-                            { 
-                                title: "Gas & elektriciteit", 
-                                desc: "Doe jaarlijks de officiële V-test van de VREG of vergelijk via Mijnenergie.be. Overstappen is eenvoudiger dan je denkt en bespaart je makkelijk € 400 per jaar.",
-                                icon: "zap",
-                                color: "text-orange-600",
-                                bg: "bg-orange-50"
-                            },
-                            { 
-                                title: "Telecom & internet", 
-                                desc: "Betaal niet voor data die je niet verbruikt. Dankzij Easy Switch stap je in 5 minuten over naar een goedkoper abonnement.",
-                                icon: "smartphone",
-                                color: "text-yellow-600",
-                                bg: "bg-yellow-50"
-                            },
-                            { 
-                                title: "Verzekeringen", 
-                                desc: "Scan op dubbele polissen en vergelijk prijzen. Heb je pechverhelping via je bank én verzekering? Schrap de dubbels en bespaar direct.",
-                                icon: "shield-check",
-                                color: "text-red-600",
-                                bg: "bg-red-50"
-                            },
-                            { 
-                                title: "Abonnementen", 
-                                desc: "Check je rekeningen op 'slapende' diensten. Gebruik je die tweede streamingdienst niet? Zeg ze op en bespaar gemiddeld 10 tot 15 euro per maand.",
-                                icon: "credit-card",
-                                color: "text-emerald-600",
-                                bg: "bg-emerald-50"
-                            }
-                        ].map((tip, i) => e('div', { key: i, className: "bg-white p-5 rounded-[12px] border border-slate-100 flex items-start gap-4 text-left" },
-                            e('div', { className: `${tip.bg} ${tip.color} w-10 h-10 rounded-full flex items-center justify-center shrink-0` }, e(Icon, { name: tip.icon, size: 20 })),
-                            e('div', { className: "space-y-1" },
-                                e('p', { className: "text-[15px] font-bold text-slate-900" }, tip.title),
-                                e('p', { className: "text-base text-slate-400 leading-relaxed font-medium" }, tip.desc)
-                            )
-                        ))
-                    ),
-                    
-                    e('section', { className: "bg-blue-50 p-6 rounded-[12px] text-slate-500 text-left border border-slate-200" },
-                        e('div', { className: "flex items-center gap-2 mb-2" },
-                            e(Icon, { name: 'calculator', size: 16, className: "text-blue-600" }),
-                            e('p', { className: "label-small text-blue-600" }, "Besparings-scan")
-                        ),
-                        e('h4', { className: "text-xl font-bold text-slate-900 mb-3" }, "Mijn bespaaroverzicht"),
-                        e('p', { className: "text-base text-slate-500 leading-relaxed mb-6" }, "We berekenen deze besparing aan de hand van jouw huidige maandelijkse uitgaven."),
-                        e('div', { className: "space-y-4" },
-                            [5, 10, 15].map(pct => 
-                                e('div', { key: pct, className: "flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-blue-100" },
-                                    e('div', null,
-                                        e('p', { className: "text-[10px] uppercase font-bold text-slate-500" }, pct + "% besparing"),
-                                        e('p', { className: "text-base font-bold text-blue-600" }, "€ " + formatEuro(stats.totalMonthlyFixed * (pct/100)) + " / maand")
-                                    ),
-                                    e('div', { className: "text-right" },
-                                        e('p', { className: "text-[10px] uppercase font-bold text-slate-500" }, "Jaarlijks"),
-                                        e('p', { className: "text-base font-bold text-slate-900" }, "€ " + formatEuro(stats.totalMonthlyFixed * (pct/100) * 12))
-                                    )
-                                )
-                            )
-                        ),
-                    )
-                ),
+      const removeCustomPrompt = (textToRemove) => {
+        setCustomQuestions(prev => prev.filter(q => q !== textToRemove));
+        setPromptPool(prev => prev.filter(q => q !== textToRemove));
+        setAvailablePrompts(prev => prev.filter(q => q !== textToRemove));
+      };
 
-                e('nav', { className: "tab-bar" },
-                    e('button', { onClick: () => handleTabChange('list'), className: `flex-1 flex flex-col items-center gap-1 transition-all ${activeTab === 'list' ? 'text-blue-600' : 'text-slate-300'}` },
-                        e(Icon, { name: 'list', size: 24, fill: activeTab === 'list' ? 'currentColor' : 'none' }),
-                        e('span', { className: "text-[11px] font-extrabold uppercase" }, "Uitgaven")
-                    ),
-                    e('button', { onClick: () => handleTabChange('insights'), className: `flex-1 flex flex-col items-center gap-1 transition-all ${activeTab === 'insights' ? 'text-blue-600' : 'text-slate-300'}` },
-                        e(Icon, { name: 'pie-chart', size: 24, fill: activeTab === 'insights' ? 'currentColor' : 'none' }),
-                        e('span', { className: "text-[11px] font-extrabold uppercase" }, "Inzicht")
-                    ),
-                    e('button', { onClick: () => handleTabChange('savings'), className: `flex-1 flex flex-col items-center gap-1 transition-all ${activeTab === 'savings' ? 'text-blue-600' : 'text-slate-300'}` },
-                        e(Icon, { name: 'piggy-bank', size: 24, fill: activeTab === 'savings' ? 'currentColor' : 'none' }),
-                        e('span', { className: "text-[11px] font-extrabold uppercase" }, "Besparen")
-                    ),
-                    e('button', { onClick: () => handleTabChange('wealth'), className: `flex-1 flex flex-col items-center gap-1 transition-all ${activeTab === 'wealth' ? 'text-blue-600' : 'text-slate-300'}` },
-                        e(Icon, { name: 'trending-up', size: 24, fill: activeTab === 'wealth' ? 'currentColor' : 'none' }),
-                        e('span', { className: "text-[11px] font-extrabold uppercase" }, "Investeren")
-                    )
-                ),
+      const addPlayer = () => {
+        const name = newPlayer.trim();
+        if (name && !players.includes(name) && players.length < 8) {
+          setPlayers(prev => [...prev, name]);
+          setScores(prev => ({ ...prev, [name]: prev[name] || 0 }));
+          setNewPlayer("");
+        }
+      };
 
-                isModalOpen && e('div', { className: "fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[110] flex items-end justify-center p-4" },
-                    e('form', { 
-                        onSubmit: (ev) => {
-                            ev.preventDefault();
-                            const finalData = { 
-                                ...formData, 
-                                isShared: !!formData.isShared,
-                                splitWith: formData.isShared ? Math.max(2, parseInt(formData.splitWith) || 2) : 1 
-                            };
-                            if (isEditing) {
-                                setContracts(contracts.map(c => c.id === formData.id ? finalData : c));
-                            } else {
-                                setContracts([...contracts, { ...finalData, id: Date.now(), status: 'active' }]);
-                            }
-                            setIsModalOpen(false);
-                        },
-                        className: "bg-white w-full max-w-md card-rounded-lg p-6 animate-sheet max-h-[90vh] overflow-y-auto text-left" 
-                    },
-                        e('div', { className: "flex justify-between items-center mb-6" }, 
-                            e('h2', { className: "text-xl font-bold text-slate-900" }, isEditing ? 'Uitgave bewerken' : 'Nieuwe uitgave'), 
-                            e('button', { type: 'button', onClick: () => setIsModalOpen(false), className: "text-slate-400 rounded-full" }, e(Icon, { name: 'x', size: 20 }))
-                        ),
-                        e('div', { className: "space-y-4" },
-                            e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-3 block" }, "Naam"), e('input', { required: true, className: "capitalize w-full bg-slate-50 rounded-xl py-4 px-5 text-base font-bold border-none", value: formData.name, onChange: ev => setFormData({...formData, name: ev.target.value}) })),
-                            e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-3 block" }, "Aanbieder / Platform"), e('input', { className: "capitalize w-full bg-slate-50 rounded-xl py-4 px-5 text-base font-bold border-none", value: formData.provider, onChange: ev => setFormData({...formData, provider: ev.target.value}) })),
-                            e('div', { className: "grid grid-cols-2 gap-4" },
-                                e('div', null, 
-                                    e('label', { className: `label-small ml-2 mb-3 block text-slate-400` }, "Type"), 
-                                    e('select', { required: true, className: "w-full bg-slate-50 rounded-xl py-4 px-5 text-base font-bold border-none appearance-none", value: formData.type, onChange: ev => setFormData({...formData, type: ev.target.value}) }, 
-                                        e('option', { value: '', disabled: true }, 'Selecteer...'), 
-                                        ['Subscription', 'Insurance', 'Housing', 'Utilities', 'Investment', 'Other'].map(opt => e('option', { key: opt, value: opt }, getTypeLabel(opt)))
-                                    )
-                                ),
-                                e('div', null, 
-                                    e('label', { className: "label-small text-slate-400 ml-2 mb-3 block" }, "Totaal bedrag"), 
-                                    e('div', { className: "relative flex items-center" },
-                                        e('span', { className: "absolute left-4 text-lg font-bold text-slate-300 pointer-events-none" }, "€ "),
-                                        e('input', { 
-                                            type: 'number', 
-                                            step: '0.01', 
-                                            required: true, 
-                                            className: "w-full bg-slate-50 rounded-xl py-4 pl-10 pr-5 text-base font-bold border-none", 
-                                            value: formData.cost, 
-                                            onChange: ev => setFormData({...formData, cost: ev.target.value}) 
-                                        })
-                                    )
-                                )
-                            ),
-                            e('div', { className: "bg-slate-50 p-5 rounded-3xl space-y-3" },
-                                e('label', { className: "flex items-center gap-3 clickable" }, e('input', { type: 'checkbox', className: "w-5 h-5 rounded-lg border-slate-300 accent-blue-600 cursor-pointer", checked: !!formData.isShared, onChange: ev => setFormData({...formData, isShared: ev.target.checked}) }), e('span', { className: "text-base font-bold text-slate-700" }, "Kosten delen met anderen")),
-                                formData.isShared && e('div', { className: "flex items-center justify-between bg-white p-3 rounded-xl" }, e('span', { className: "text-base font-bold text-slate-400" }, "Aantal personen:"), e('input', { type: 'number', inputMode: 'numeric', className: "w-16 text-center font-bold text-blue-600 border-none", value: formData.splitWith, onChange: ev => setFormData({...formData, splitWith: ev.target.value}) }))
-                            ),
-                            e('div', null, e('label', { className: "label-small text-slate-400 ml-2 mb-3 block" }, "Frequentie"), e('div', { className: "flex bg-slate-100 p-1 rounded-xl" }, ['weekly', 'monthly', 'quarterly', 'yearly'].map(f => e('button', { key: f, type: 'button', onClick: () => setFormData({...formData, frequency: f}), className: `flex-1 py-3 rounded-xl text-[12px] font-bold transition-all ${formData.frequency === f ? 'bg-white text-blue-600' : 'text-slate-500'}` }, f === 'weekly' ? 'Week' : f === 'monthly' ? 'Maand' : f === 'quarterly' ? '3 mnd' : 'Jaar')))),
-                            e('button', { type: 'submit', className: "w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-base mt-4 flex items-center justify-center gap-2" }, e(Icon, { name: 'save', size: 18 }), isEditing ? 'Opslaan' : 'Toevoegen')
-                        )
-                    )
-                ),
+      const removePlayer = (i) => {
+        const name = players[i];
+        setPlayers(prev => prev.filter((_, idx) => idx !== i));
+        setScores(prev => { const s = { ...prev }; delete s[name]; return s; });
+      };
 
-                selectedContract && e('div', { className: "fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[110] flex items-end justify-center" },
-                    e('div', { className: "bg-white w-full max-w-md rounded-t-[20px] p-6 animate-sheet text-left capitalize" },
-                        e('div', { className: "flex justify-between items-start mb-8" },
-                            e('div', null, e('span', { className: `label-small ${getIconColorClass(selectedContract.type)} px-2.5 py-1 rounded-lg mb-2 inline-block` }, getTypeLabel(selectedContract.type)), e('h2', { className: "text-xl font-bold text-slate-900 leading-tight" }, selectedContract.name), e('p', { className: "text-slate-400 font-medium normal-case" }, selectedContract.provider || 'Geen aanbieder')),
-                            e('button', { onClick: () => setSelectedContract(null), className: "text-slate-400 rounded-xl" }, e(Icon, { name: 'x', size: 20 }))
-                        ),
-                        e('div', { className: "grid grid-cols-2 gap-4 mb-8" },
-                            e('div', { className: "bg-slate-50 p-5 rounded-[12px] border border-slate-100" }, 
-                                e('p', { className: "label-small text-slate-400" }, selectedContract.isShared ? "Jouw aandeel" : "Totaal bedrag"), 
-                                e('div', { className: "flex flex-wrap items-baseline gap-x-2 leading-tight" }, 
-                                    e('p', { className: "text-xl font-extrabold text-blue-600" }, 
-                                        `€\u00A0${formatEuro(getMonthlyCost(selectedContract))}`
-                                    ),
-                                    selectedContract.isShared && e('p', { 
-                                        className: "text-slate-400 font-medium text-xs whitespace-nowrap" 
-                                    }, `/ €\u00A0${formatEuro(getFullMonthlyCost(selectedContract))}`)
-                                )
-                            ),
-                            e('div', { className: "bg-slate-50 p-5 rounded-[12px] border border-slate-100" }, 
-                                e('p', { className: "label-small text-slate-400" }, "Frequentie"), 
-                                e('div', { className: "mt-1 flex flex-col items-start" },
-                                    e('p', { className: "text-base font-bold text-slate-700 normal-case leading-tight" }, 
-                                        getFrequencyLabel(selectedContract.frequency)
-                                    ),
-                                    selectedContract.isShared && e('p', { 
-                                        className: "text-slate-400 font-medium text-xs leading-tight mt-1 lowercase" 
-                                    }, `${selectedContract.splitWith} personen`)
-                                )
-                            )
-                        ),
-                        e('div', { className: "space-y-3" },
-                            e('button', { onClick: () => { setIsEditing(true); setFormData(selectedContract); setIsModalOpen(true); setSelectedContract(null); }, className: "w-full bg-blue-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2" }, e(Icon, { name: 'edit-3', size: 18 }), "Bewerken"),
-                            e('button', { onClick: () => { setContracts(contracts.filter(c => c.id !== selectedContract.id)); setSelectedContract(null); }, className: "w-full bg-red-50 text-red-600 py-4 rounded-xl font-bold flex items-center justify-center gap-2" }, e(Icon, { name: 'trash-2', size: 18 }), "Verwijderen")
-                        )
-                    )
-                )
-            );
-        };
+      // ── Na het lezen: ga naar volgende speler of naar WRITE ──────────────
+      const doneReading = () => {
+        if (currentPlayerIdx + 1 < players.length) {
+          setCurrentPlayerIdx(i => i + 1);
+          setPhase(PHASES.QUESTION_TURN);
+        } else {
+          setPhase(PHASES.WRITE);
+        }
+      };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(e(App));
-    </script>
+      const startCountdown = () => { setCountdown(3); setPhase(PHASES.COUNTDOWN); };
+
+      useEffect(() => {
+        if (phase !== PHASES.COUNTDOWN) return;
+        countdownRef.current = setInterval(() => {
+          setCountdown(c => {
+            if (c <= 1) { clearInterval(countdownRef.current); setPhase(PHASES.SHOW_NAMES); return 0; }
+            return c - 1;
+          });
+        }, 1000);
+        return () => clearInterval(countdownRef.current);
+      }, [phase]);
+
+      const handleResult = (imposterFound) => {
+        setScores(prev => {
+          const s = { ...prev };
+          if (imposterFound) {
+            players.forEach((p, i) => { if (i !== imposterIdx) s[p] = (s[p] || 0) + 1; });
+          } else {
+            s[players[imposterIdx]] = (s[players[imposterIdx]] || 0) + 1;
+          }
+          return s;
+        });
+        setPhase(PHASES.SCOREBOARD);
+      };
+
+      const resetGame = () => {
+        setPhase(PHASES.SETUP); setPlayers([]); setRound(0);
+        setScores({}); setImposterIdx(null);
+        setAvailablePrompts([...promptPool]);
+        try {
+          localStorage.removeItem("imposter_players");
+          localStorage.removeItem("imposter_scores");
+          localStorage.removeItem("imposter_available_prompts");
+        } catch {}
+      };
+
+      return (
+        <React.Fragment>
+          {showInstructions && (
+            <InstructionsModal onClose={() => setShowInstructions(false)} />
+          )}
+          {showPrompts && (
+            <PromptsModal 
+              customQuestions={customQuestions} 
+              onAdd={addCustomPrompt} 
+              onDelete={removeCustomPrompt}
+              onClose={() => setShowPrompts(false)} 
+            />
+          )}
+          
+          {phase === PHASES.SETUP && (
+            <SetupScreen players={players} newPlayer={newPlayer} setNewPlayer={setNewPlayer} addPlayer={addPlayer} removePlayer={removePlayer} startGame={() => startGame()} onOpenPrompts={() => setShowPrompts(true)} onOpenInstructions={() => setShowInstructions(true)} />
+          )}
+          {phase === PHASES.QUESTION_TURN && (
+            <QuestionTurnScreen player={players[currentPlayerIdx]} round={round} current={currentPlayerIdx + 1} total={players.length} onShow={() => setPhase(PHASES.SHOW_QUESTION)} />
+          )}
+          {phase === PHASES.SHOW_QUESTION && (
+            <ShowQuestionScreen isImposter={currentPlayerIdx === imposterIdx} question={currentPlayerIdx === imposterIdx ? currentImposterQ : currentNormalQ} isLast={currentPlayerIdx + 1 === players.length} onDone={doneReading} />
+          )}
+          {phase === PHASES.WRITE && (
+            <WriteScreen onReady={startCountdown} />
+          )}
+          {phase === PHASES.COUNTDOWN && (
+            <CountdownScreen countdown={countdown} />
+          )}
+          {phase === PHASES.SHOW_NAMES && (
+            <ShowNamesScreen onReveal={() => setPhase(PHASES.REVEAL_QUESTION)} />
+          )}
+          {phase === PHASES.REVEAL_QUESTION && (
+            <RevealQuestionScreen normalQuestion={currentNormalQ} onDone={() => setPhase(PHASES.RESULT)} />
+          )}
+          {phase === PHASES.RESULT && (
+            <ResultScreen imposterName={players[imposterIdx]} normalQ={currentNormalQ} imposterQ={currentImposterQ} onFound={() => handleResult(true)} onNotFound={() => handleResult(false)} />
+          )}
+          {phase === PHASES.SCOREBOARD && (
+            <ScoreboardScreen players={players} scores={scores} round={round} onPlayAgain={() => startGame()} onReset={resetGame} />
+          )}
+        </React.Fragment>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<ImposterGame />);
+  </script>
 </body>
 </html>
